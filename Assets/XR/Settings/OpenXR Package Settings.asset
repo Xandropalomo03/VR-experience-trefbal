@@ -264,25 +264,25 @@ MonoBehaviour:
   m_Name: Standalone
   m_EditorClassIdentifier: Unity.XR.OpenXR::UnityEngine.XR.OpenXR.OpenXRSettings
   features:
-  - {fileID: 1777089930236518700}
-  - {fileID: -1242930426511694757}
   - {fileID: 5342708996066429009}
-  - {fileID: -1264784159668538366}
-  - {fileID: 9124660506167151804}
-  - {fileID: -529751371662001164}
-  - {fileID: 2330909506386059723}
-  - {fileID: 6069561507345200919}
   - {fileID: -8754960135826577188}
+  - {fileID: 2330909506386059723}
+  - {fileID: 6291681937772590613}
   - {fileID: 4712938895119636882}
-  - {fileID: 5512835301465276591}
+  - {fileID: 4349106263676057543}
+  - {fileID: -3469854070482105104}
   - {fileID: 4218278975808406245}
   - {fileID: 5183755398572080711}
-  - {fileID: 4349106263676057543}
-  - {fileID: 4940237939438347825}
-  - {fileID: -3469854070482105104}
-  - {fileID: 6291681937772590613}
   - {fileID: -7907541481578081615}
+  - {fileID: 6069561507345200919}
+  - {fileID: -529751371662001164}
+  - {fileID: 5512835301465276591}
+  - {fileID: -1242930426511694757}
+  - {fileID: 9124660506167151804}
+  - {fileID: -1264784159668538366}
+  - {fileID: 1777089930236518700}
   - {fileID: 8441515167420640247}
+  - {fileID: 4940237939438347825}
   customLoaderName: 
   m_renderMode: 1
   m_latencyOptimization: 0
@@ -295,7 +295,7 @@ MonoBehaviour:
   m_symmetricProjection: 0
   m_optimizeMultiviewRenderRegions: 0
   m_multiviewRenderRegionsOptimizationMode: 0
-  m_hasMigratedMultiviewRenderRegionSetting: 0
+  m_hasMigratedMultiviewRenderRegionSetting: 1
   m_foveatedRenderingApi: 0
   m_useOpenXRPredictedTime: 0
 --- !u!114 &4712938895119636882
@@ -420,7 +420,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c4b862ee14fb479fbfe5fffe655d3ed3, type: 3}
   m_Name: MetaQuestTouchProControllerProfile Standalone
   m_EditorClassIdentifier: Unity.XR.OpenXR::UnityEngine.XR.OpenXR.Features.Interactions.MetaQuestTouchProControllerProfile
-  m_enabled: 0
+  m_enabled: 1
   nameUi: Meta Quest Touch Pro Controller Profile
   version: 0.0.1
   featureIdInternal: com.unity.openxr.feature.input.metaquestpro
