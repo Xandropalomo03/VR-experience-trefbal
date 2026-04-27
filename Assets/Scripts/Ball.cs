@@ -19,4 +19,14 @@ public class Ball : MonoBehaviour
             Destroy(gameObject);
         }
     }
+
+    private void OnCollisionEnter(Collision collision)
+    {
+        DodgeballAgent agent = collision.gameObject.GetComponent<DodgeballAgent>();
+        if (agent != null)
+        {
+            agent.OnHitByBall();
+            Destroy(gameObject);
+        }
+    }
 }
