@@ -8,41 +8,45 @@ public class CatchAgent : Agent
     [Header("Ball")]
     public Transform ball;
 
-    private bool isCatching;
+    [Header("Catch Zone (debug + visuals)")]
+    public Transform catchZone;
+    public Renderer catchZoneRenderer;
 
-    [Header("Catch Zone (debug only)")]
-    public Transform catchZone; // alleen voor visuals/debug
+    private bool isCatching;
+    private bool lastCatching;
 
     // ---------------- EPISODE ----------------
     public override void OnEpisodeBegin()
     {
         isCatching = false;
+        lastCatching = false;
+
+        if (catchZoneRenderer != null)
+            catchZoneRenderer.material.color = Color.white;
     }
 
     // ---------------- OBSERVATIONS ----------------
     public override void CollectObservations(VectorSensor sensor)
     {
-        // 1. huidige state
+        // state
         sensor.AddObservation(isCatching ? 1f : 0f);
 
         if (ball != null)
         {
             Vector3 toBall = ball.position - transform.position;
-
             Rigidbody rb = ball.GetComponent<Rigidbody>();
 
-            // 2. richting naar bal
+            // richting
             sensor.AddObservation(toBall.normalized);
 
-            // 3. afstand (genormaliseerd)
+            // afstand
             sensor.AddObservation(toBall.magnitude / 15f);
 
-            // 4. snelheid van bal
+            // snelheid
             sensor.AddObservation(rb != null ? rb.linearVelocity / 10f : Vector3.zero);
         }
         else
         {
-            // fallback
             sensor.AddObservation(Vector3.zero);
             sensor.AddObservation(0f);
             sensor.AddObservation(Vector3.zero);
@@ -56,24 +60,44 @@ public class CatchAgent : Agent
 
         isCatching = action == 1;
 
-        AddReward(-0.001f); // tijd penalty
+        // BASE TIME PENALTY
+        AddReward(-0.001f);
+
+        // ANTI-SPAM PENALTY (constant catch gedragingen)
+        if (isCatching)
+        {
+            AddReward(-0.005f);
+        }
+
+        // TOGGLE SPAM PENALTY (flikkeren tussen aan/uit)
+        if (isCatching != lastCatching)
+        {
+            AddReward(-0.01f);
+        }
+
+        lastCatching = isCatching;
+
+        // VISUAL DEBUG
+        if (catchZoneRenderer != null)
+        {
+            catchZoneRenderer.material.color =
+                isCatching ? Color.yellow : Color.white;
+        }
     }
 
-    // ---------------- UNITY VALIDATION (IMPORTANT) ----------------
+    // ---------------- SUCCESS / FAIL ----------------
     private void OnTriggerEnter(Collider other)
     {
         if (!other.CompareTag("Ball")) return;
 
-        bool validCatch = isCatching;
-
-        if (validCatch)
+        if (isCatching)
         {
-            // ✔ goede catch
+            Debug.Log("SUCCESSFUL CATCH");
             AddReward(1f);
         }
         else
         {
-            // ❌ geraakt zonder catch
+            Debug.Log("HIT (no catch)");
             AddReward(-1f);
         }
 
@@ -85,7 +109,7 @@ public class CatchAgent : Agent
     {
         if (!collision.gameObject.CompareTag("Ball")) return;
 
-        // extra fail case (hard hit)
+        Debug.Log("HARD HIT");
         AddReward(-1f);
 
         Destroy(collision.gameObject);
@@ -104,7 +128,7 @@ public class CatchAgent : Agent
     {
         if (catchZone != null)
         {
-            Gizmos.color = isCatching ? Color.green : Color.red;
+            Gizmos.color = isCatching ? Color.yellow : Color.red;
             Gizmos.DrawWireSphere(catchZone.position, 0.3f);
         }
     }

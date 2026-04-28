@@ -5,6 +5,7 @@ public class BallSpawner : MonoBehaviour
     [Header("Setup")]
     public GameObject ballPrefab;
     public Transform target;
+    public Transform[] spawnPoints; // meerdere locaties
 
     [Header("Spawn Timing")]
     public float minSpawnInterval = 0.5f;
@@ -17,6 +18,8 @@ public class BallSpawner : MonoBehaviour
     private float timer;
     private float nextSpawnTime;
 
+    private GameObject currentBall;
+
     private void Start()
     {
         SetNextSpawnTime();
@@ -24,6 +27,9 @@ public class BallSpawner : MonoBehaviour
 
     private void Update()
     {
+        // wacht tot bal weg is
+        if (currentBall != null) return;
+
         timer += Time.deltaTime;
 
         if (timer >= nextSpawnTime)
@@ -41,20 +47,29 @@ public class BallSpawner : MonoBehaviour
 
     private void SpawnBall()
     {
-        if (ballPrefab == null || target == null) return;
+        if (ballPrefab == null || target == null || spawnPoints.Length == 0) return;
 
-        GameObject ball = Instantiate(ballPrefab, transform.position, Quaternion.identity);
+        // kies random spawn point
+        Transform spawnPoint = spawnPoints[Random.Range(0, spawnPoints.Length)];
 
-        Vector3 direction = target.position - transform.position;
+        currentBall = Instantiate(ballPrefab, spawnPoint.position, Quaternion.identity);
+
+        Vector3 direction = target.position - spawnPoint.position;
         direction.y = 0f;
         direction = direction.normalized;
 
         float speed = Random.Range(minSpeed, maxSpeed);
 
-        Rigidbody rb = ball.GetComponent<Rigidbody>();
+        Rigidbody rb = currentBall.GetComponent<Rigidbody>();
         if (rb != null)
         {
             rb.linearVelocity = direction * speed;
         }
+    }
+
+    // BELANGRIJK: reset als bal verdwijnt
+    public void NotifyBallDestroyed()
+    {
+        currentBall = null;
     }
 }
