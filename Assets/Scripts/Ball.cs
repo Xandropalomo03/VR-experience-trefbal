@@ -2,21 +2,10 @@ using UnityEngine;
 
 public class Ball : MonoBehaviour
 {
-    [SerializeField] private float lifetime = 4f;
+    public float lifetime = 5f;
 
-    private float timer;
-
-    private void OnEnable()
+    private void Start()
     {
-        timer = 0f;
-    }
-
-    private void Update()
-    {
-        timer += Time.deltaTime;
-        if (timer >= lifetime)
-        {
-            Destroy(gameObject);
-        }
+        Destroy(gameObject, lifetime);
     }
 }

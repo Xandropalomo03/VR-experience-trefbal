@@ -2,23 +2,41 @@ using UnityEngine;
 
 public class BallSpawner : MonoBehaviour
 {
-    [SerializeField] private GameObject ballPrefab;
-    [SerializeField] private Transform target;
-    [SerializeField] private float spawnInterval = 1.5f;
-    [SerializeField] private float ballSpeed = 8f;
-    [SerializeField] private float speedVariation = 2f;
-    [SerializeField] private float aimNoise = 1f;
+    [Header("Setup")]
+    public GameObject ballPrefab;
+    public Transform target;
+
+    [Header("Spawn Timing")]
+    public float minSpawnInterval = 0.5f;
+    public float maxSpawnInterval = 1.5f;
+
+    [Header("Speed")]
+    public float minSpeed = 6f;
+    public float maxSpeed = 10f;
 
     private float timer;
+    private float nextSpawnTime;
+
+    private void Start()
+    {
+        SetNextSpawnTime();
+    }
 
     private void Update()
     {
         timer += Time.deltaTime;
-        if (timer >= spawnInterval)
+
+        if (timer >= nextSpawnTime)
         {
             timer = 0f;
+            SetNextSpawnTime();
             SpawnBall();
         }
+    }
+
+    private void SetNextSpawnTime()
+    {
+        nextSpawnTime = Random.Range(minSpawnInterval, maxSpawnInterval);
     }
 
     private void SpawnBall()
@@ -27,21 +45,16 @@ public class BallSpawner : MonoBehaviour
 
         GameObject ball = Instantiate(ballPrefab, transform.position, Quaternion.identity);
 
-        // Beetje ruis zorgt ervoor dat het niet gooit met aimbot
-        Vector3 aimPoint = target.position + new Vector3(
-            Random.Range(-aimNoise, aimNoise),
-            0f,
-            Random.Range(-aimNoise, aimNoise)
-        );
-        // Bepaald richting van de bal
-        Vector3 direction = (aimPoint - transform.position).normalized;
+        Vector3 direction = target.position - transform.position;
+        direction.y = 0f;
+        direction = direction.normalized;
 
-        float speed = ballSpeed + Random.Range(-speedVariation, speedVariation);
-        ball.GetComponent<Rigidbody>().linearVelocity = direction * speed;
-    }
+        float speed = Random.Range(minSpeed, maxSpeed);
 
-    public void ResetSpawner()
-    {
-        timer = 0f;
+        Rigidbody rb = ball.GetComponent<Rigidbody>();
+        if (rb != null)
+        {
+            rb.linearVelocity = direction * speed;
+        }
     }
 }
