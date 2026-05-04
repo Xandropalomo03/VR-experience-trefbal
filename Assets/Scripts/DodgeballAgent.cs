@@ -39,10 +39,53 @@ public class DodgeballAgent : Agent
         sensor.AddObservation(transform.localPosition.z / 5f);
         sensor.AddObservation(rb.linearVelocity.x / moveSpeed);
         sensor.AddObservation(rb.linearVelocity.z / moveSpeed);
+
+        GameObject closestBall = FindClosestBall();
+        if (closestBall != null)
+        {
+            Vector3 ballRelative = closestBall.transform.position - transform.position;
+            Vector3 ballVel = closestBall.GetComponent<Rigidbody>().linearVelocity;
+
+            sensor.AddObservation(ballRelative.x / 10f);
+            sensor.AddObservation(ballRelative.z / 10f);
+            sensor.AddObservation(ballVel.x / 10f);
+            sensor.AddObservation(ballVel.z / 10f);
+            sensor.AddObservation(1f);
+        }
+        else
+        {
+            sensor.AddObservation(0f);
+            sensor.AddObservation(0f);
+            sensor.AddObservation(0f);
+            sensor.AddObservation(0f);
+            sensor.AddObservation(0f);
+        }
     }
+
+private GameObject FindClosestBall()
+{
+    GameObject[] balls = GameObject.FindGameObjectsWithTag("Ball");
+    if (balls.Length == 0) return null;
+
+    GameObject closest = null;
+    float minDist = Mathf.Infinity;
+    foreach (GameObject ball in balls)
+    {
+        float dist = Vector3.Distance(transform.position, ball.transform.position);
+        if (dist < minDist)
+        {
+            minDist = dist;
+            closest = ball;
+        }
+    }
+    return closest;
+}
 
     public override void OnActionReceived(ActionBuffers actions)
     {
+        if (StepCount % 100 == 0)
+            Debug.Log($"step={StepCount} action=({actions.ContinuousActions[0]:F2}, {actions.ContinuousActions[1]:F2}) vel={rb.linearVelocity.magnitude:F2}");
+
         float moveX = actions.ContinuousActions[0];
         float moveZ = actions.ContinuousActions[1];
 
@@ -50,7 +93,7 @@ public class DodgeballAgent : Agent
         rb.linearVelocity = new Vector3(movement.x, rb.linearVelocity.y, movement.z);
 
         // Kleine survival reward per stap
-        AddReward(0.001f);
+        AddReward(0.005f); // was 0.001f
     }
 
     public override void Heuristic(in ActionBuffers actionsOut)
@@ -62,6 +105,7 @@ public class DodgeballAgent : Agent
 
     public void OnHitByBall()
     {
+        Debug.Log($"HIT step={StepCount} cumReward={GetCumulativeReward():F3}");
         AddReward(-1f);
         EndEpisode();
     }
