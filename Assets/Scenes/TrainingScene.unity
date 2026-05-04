@@ -225,6 +225,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 275875026}
+  - component: {fileID: 275875027}
   m_Layer: 0
   m_Name: Arena
   m_TagString: Untagged
@@ -254,6 +255,19 @@ Transform:
   - {fileID: 870836071}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &275875027
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 275875025}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ef613b0d726857840ac52c134c41c060, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ArenaDuplicator
+  duplicate: 1
 --- !u!1 &660186488
 GameObject:
   m_ObjectHideFlags: 0
@@ -417,6 +431,12 @@ MonoBehaviour:
   ballSpeed: 8
   speedVariation: 2
   aimNoise: 1
+  spawnAngles:
+  - 0
+  - 90
+  - 180
+  - 270
+  spawnRadius: 4.5
 --- !u!1 &879991356
 GameObject:
   m_ObjectHideFlags: 0
@@ -954,9 +974,9 @@ MonoBehaviour:
     VectorActionDescriptions: []
     VectorActionSpaceType: 0
     hasUpgradedBrainParametersWithActionSpec: 1
-  m_Model: {fileID: 0}
+  m_Model: {fileID: 5022602860645237092, guid: f24be1ba1da7e3b4a86d17a11ee42cb9, type: 3}
   m_InferenceDevice: 0
-  m_BehaviorType: 0
+  m_BehaviorType: 2
   m_BehaviorName: DodgeballAgent
   TeamId: 0
   m_UseChildSensors: 1
