@@ -9,10 +9,12 @@ public class DodgeballAgent : Agent
     [SerializeField] private BallSpawner ballSpawner;
 
     private Rigidbody rb;
+    private Transform myArena;
 
     public override void Initialize()
     {
         rb = GetComponent<Rigidbody>();
+        myArena = transform.parent;
     }
 
     public override void OnEpisodeBegin()
@@ -72,6 +74,8 @@ private GameObject FindClosestBall()
     float minDist = Mathf.Infinity;
     foreach (GameObject ball in balls)
     {
+        if (myArena != null && ball.transform.parent != myArena) continue;
+
         float dist = Vector3.Distance(transform.position, ball.transform.position);
         if (dist < minDist)
         {
@@ -115,6 +119,7 @@ private GameObject FindClosestBall()
         GameObject[] balls = GameObject.FindGameObjectsWithTag("Ball");
         foreach (GameObject ball in balls)
         {
+            if (myArena != null && ball.transform.parent != myArena) continue;
             Destroy(ball);
         }
     }

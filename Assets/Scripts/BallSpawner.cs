@@ -38,6 +38,10 @@ public class BallSpawner : MonoBehaviour
         );
 
         GameObject ball = Instantiate(ballPrefab, spawnPos, Quaternion.identity);
+        if (transform.parent != null)
+        {
+            ball.transform.SetParent(transform.parent, true);
+        }
 
         // Beetje ruis zorgt ervoor dat het niet gooit met aimbot
         Vector3 aimPoint = target.position + new Vector3(
