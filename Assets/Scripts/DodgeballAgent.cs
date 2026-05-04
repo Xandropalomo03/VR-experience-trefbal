@@ -24,7 +24,6 @@ public class DodgeballAgent : Agent
             1f,
             Random.Range(-4f, 4f)
         );
-        transform.rotation = Quaternion.Euler(0f, Random.Range(0f, 360f), 0f);
         rb.linearVelocity = Vector3.zero;
         rb.angularVelocity = Vector3.zero;
 
