@@ -22,7 +22,7 @@ public class DodgeballAgent : Agent
         transform.localPosition = new Vector3(
             Random.Range(-4f, 4f),
             1f,
-            Random.Range(-4f, 4f)
+            Random.Range(-4f, -1f)
         );
         rb.linearVelocity = Vector3.zero;
         rb.angularVelocity = Vector3.zero;
