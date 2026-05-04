@@ -97,7 +97,7 @@ private GameObject FindClosestBall()
         rb.linearVelocity = new Vector3(movement.x, rb.linearVelocity.y, movement.z);
 
         // Kleine survival reward per stap
-        AddReward(0.005f); // was 0.001f
+        AddReward(0.01f); // was 0.005f
     }
 
     public override void Heuristic(in ActionBuffers actionsOut)
