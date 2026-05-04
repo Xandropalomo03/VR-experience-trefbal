@@ -1,0 +1,29 @@
+{
+    "CatchAgent": {
+        "checkpoints": [
+            {
+                "steps": 38083,
+                "file_path": "results\\CatchTraining_v6_FixedRotation\\CatchAgent\\CatchAgent-38083.onnx",
+                "reward": -1.7492857362542833,
+                "creation_time": 1777886425.5234156,
+                "auxillary_file_paths": [
+                    "results\\CatchTraining_v6_FixedRotation\\CatchAgent\\CatchAgent-38083.pt"
+                ]
+            }
+        ],
+        "final_checkpoint": {
+            "steps": 38083,
+            "file_path": "results\\CatchTraining_v6_FixedRotation\\CatchAgent.onnx",
+            "reward": -1.7492857362542833,
+            "creation_time": 1777886425.5234156,
+            "auxillary_file_paths": [
+                "results\\CatchTraining_v6_FixedRotation\\CatchAgent\\CatchAgent-38083.pt"
+            ]
+        }
+    },
+    "metadata": {
+        "stats_format_version": "0.3.0",
+        "mlagents_version": "0.30.0",
+        "torch_version": "1.7.1+cu110"
+    }
+}

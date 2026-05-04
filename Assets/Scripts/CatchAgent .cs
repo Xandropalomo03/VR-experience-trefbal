@@ -8,18 +8,30 @@ public class CatchAgent : Agent
     [Header("Ball")]
     public Transform ball;
 
-    [Header("Catch Zone (debug + visuals)")]
-    public Transform catchZone;
+    [Header("Catch Zone")]
     public Renderer catchZoneRenderer;
 
+    // ---------------- STATE ----------------
     private bool isCatching;
     private bool lastCatching;
+
+    // rotation anti-spam
+    private int lastRotation = -1;
+
+    // catch cooldown (BELANGRIJK)
+    private float catchCooldown = 0f;
 
     // ---------------- EPISODE ----------------
     public override void OnEpisodeBegin()
     {
         isCatching = false;
         lastCatching = false;
+
+        lastRotation = -1;
+        catchCooldown = 0f;
+
+        // start fixed orientation (2-direction setup)
+        transform.rotation = Quaternion.Euler(0f, 90f, 0f);
 
         if (catchZoneRenderer != null)
             catchZoneRenderer.material.color = Color.white;
@@ -28,7 +40,7 @@ public class CatchAgent : Agent
     // ---------------- OBSERVATIONS ----------------
     public override void CollectObservations(VectorSensor sensor)
     {
-        // state
+        // catch state
         sensor.AddObservation(isCatching ? 1f : 0f);
 
         if (ball != null)
@@ -36,14 +48,9 @@ public class CatchAgent : Agent
             Vector3 toBall = ball.position - transform.position;
             Rigidbody rb = ball.GetComponent<Rigidbody>();
 
-            // richting
-            sensor.AddObservation(toBall.normalized);
-
-            // afstand
-            sensor.AddObservation(toBall.magnitude / 15f);
-
-            // snelheid
-            sensor.AddObservation(rb != null ? rb.linearVelocity / 10f : Vector3.zero);
+            sensor.AddObservation(toBall.normalized); // direction (3)
+            sensor.AddObservation(toBall.magnitude / 15f); // distance (1)
+            sensor.AddObservation(rb != null ? rb.linearVelocity / 10f : Vector3.zero); // velocity (3)
         }
         else
         {
@@ -51,37 +58,73 @@ public class CatchAgent : Agent
             sensor.AddObservation(0f);
             sensor.AddObservation(Vector3.zero);
         }
+
+        // facing direction
+        sensor.AddObservation(transform.forward); // (3)
     }
 
     // ---------------- ACTIONS ----------------
     public override void OnActionReceived(ActionBuffers actions)
     {
-        int action = actions.DiscreteActions[0];
+        int rotateAction = actions.DiscreteActions[0];
+        bool catchAttempt = actions.DiscreteActions[1] == 1;
 
-        isCatching = action == 1;
+        // cooldown tick
+        catchCooldown -= Time.deltaTime;
 
-        // BASE TIME PENALTY
-        AddReward(-0.001f);
+        // ---------------- ROTATION (2 FIXED DIRECTIONS) ----------------
+        if (rotateAction == 0)
+            transform.rotation = Quaternion.Euler(0f, 90f, 0f);
+        else
+            transform.rotation = Quaternion.Euler(0f, 270f, 0f);
 
-        // ANTI-SPAM PENALTY (constant catch gedragingen)
-        if (isCatching)
-        {
+        // penalty voor flip-spam
+        if (rotateAction != lastRotation)
             AddReward(-0.005f);
-        }
 
-        // TOGGLE SPAM PENALTY (flikkeren tussen aan/uit)
-        if (isCatching != lastCatching)
+        lastRotation = rotateAction;
+
+        // ---------------- BASE REWARD ----------------
+        AddReward(-0.001f); // time penalty
+
+        // ---------------- LEARNING SIGNAL ----------------
+        if (ball != null)
         {
-            AddReward(-0.01f);
+            Vector3 toBall = (ball.position - transform.position).normalized;
+            float alignment = Vector3.Dot(transform.forward, toBall);
+            float dist = Vector3.Distance(transform.position, ball.position);
+
+            // stabiel leren kijken
+            if (alignment < 0)
+                AddReward(alignment * 0.03f);
+            else
+                AddReward(alignment * 0.01f);
+
+            // goede positie bonus
+            if (dist < 5f && alignment > 0.85f)
+                AddReward(0.01f);
+
+            // ---------------- CATCH LOGIC ----------------
+            if (catchAttempt && catchCooldown <= 0f)
+            {
+                if (alignment > 0.85f)
+                {
+                    AddReward(0.05f);   // goede catch
+                    catchCooldown = 0.5f;
+                }
+                else
+                {
+                    AddReward(-0.02f);  // slechte catch
+                    catchCooldown = 0.2f;
+                }
+            }
         }
 
-        lastCatching = isCatching;
-
-        // VISUAL DEBUG
+        // ---------------- VISUAL ----------------
         if (catchZoneRenderer != null)
         {
             catchZoneRenderer.material.color =
-                isCatching ? Color.yellow : Color.white;
+                catchAttempt ? Color.yellow : Color.white;
         }
     }
 
@@ -90,16 +133,8 @@ public class CatchAgent : Agent
     {
         if (!other.CompareTag("Ball")) return;
 
-        if (isCatching)
-        {
-            Debug.Log("SUCCESSFUL CATCH");
-            AddReward(1f);
-        }
-        else
-        {
-            Debug.Log("HIT (no catch)");
-            AddReward(-1f);
-        }
+        AddReward(1f);
+        Debug.Log("SUCCESSFUL CATCH");
 
         Destroy(other.gameObject);
         EndEpisode();
@@ -109,8 +144,8 @@ public class CatchAgent : Agent
     {
         if (!collision.gameObject.CompareTag("Ball")) return;
 
-        Debug.Log("HARD HIT");
         AddReward(-1f);
+        Debug.Log("HARD HIT");
 
         Destroy(collision.gameObject);
         EndEpisode();
@@ -120,16 +155,16 @@ public class CatchAgent : Agent
     public override void Heuristic(in ActionBuffers actionsOut)
     {
         actionsOut.DiscreteActions.Array[0] =
+            Input.GetKey(KeyCode.A) ? 0 : 1;
+
+        actionsOut.DiscreteActions.Array[1] =
             Input.GetKey(KeyCode.Space) ? 1 : 0;
     }
 
-    // ---------------- DEBUG VISUAL ----------------
+    // ---------------- DEBUG ----------------
     private void OnDrawGizmos()
     {
-        if (catchZone != null)
-        {
-            Gizmos.color = isCatching ? Color.yellow : Color.red;
-            Gizmos.DrawWireSphere(catchZone.position, 0.3f);
-        }
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireSphere(transform.position, 0.3f);
     }
 }
