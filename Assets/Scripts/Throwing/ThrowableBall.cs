@@ -30,11 +30,17 @@ public class ThrowableBall : MonoBehaviour
         collisionHandled = false;
 
         if (rb == null) rb = GetComponent<Rigidbody>();
+        if (ballCollider == null) ballCollider = GetComponent<Collider>();
 
         // Eerst velocities nullen, DAARNA pas kinematic zetten — anders krijg je warnings.
         rb.linearVelocity = Vector3.zero;
         rb.angularVelocity = Vector3.zero;
         rb.isKinematic = true;
+
+        // Negeer agent collider ook in Held state. Anders duwt de bal de agent weg
+        // en kan WASD beweging niet doorkomen zolang hij vast wordt gehouden.
+        if (ballCollider != null && agentCollider != null)
+            Physics.IgnoreCollision(ballCollider, agentCollider, true);
 
         if (holder != null)
             transform.position = holder.position;

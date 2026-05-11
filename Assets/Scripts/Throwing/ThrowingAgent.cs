@@ -186,9 +186,12 @@ public class ThrowingAgent : Agent
     {
         if (currentBall == null) return;
 
-        // Map continue acties naar feitelijke waardes
+        // Mapping:
+        //   angleNorm = -1 -> minAngle (20°), 0 -> middel (40°), +1 -> maxAngle (60°)
+        //   powerNorm = -1 -> minPower (6),   0 -> middel (10),  +1 -> maxPower (14)
         float elev = Mathf.Lerp(minAngle, maxAngle, (angleNorm + 1f) * 0.5f);
         float power = Mathf.Lerp(minPower, maxPower, (powerNorm + 1f) * 0.5f);
+        float yawDeg = transform.eulerAngles.y;
 
         // Forward op basis van huidige rotation
         Vector3 forward = transform.forward;
@@ -213,7 +216,7 @@ public class ThrowingAgent : Agent
         hasThrown = true;
         closestApproach = Vector3.Distance(currentBall.transform.position, target.transform.position);
 
-        Debug.Log("Throw triggered, power=" + power + " yaw=" + transform.eulerAngles.y);
+        Debug.Log("Throw computed: angle=" + elev + " power=" + power + " yaw=" + yawDeg);
     }
 
     // Aangeroepen door ThrowableBall bij raken doel
