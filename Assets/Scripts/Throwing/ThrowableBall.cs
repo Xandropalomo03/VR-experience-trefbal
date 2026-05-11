@@ -63,8 +63,13 @@ public class ThrowableBall : MonoBehaviour
             Physics.IgnoreCollision(ballCollider, agentCollider, true);
 
         rb.isKinematic = false;
+        // Garandeer gravity expliciet — als prefab dit ergens uit had staan,
+        // zou de bal anders eeuwig doorvliegen.
+        rb.useGravity = true;
         rb.linearVelocity = velocity;
         rb.angularVelocity = Vector3.zero;
+
+        Debug.Log("Ball released: velocity=" + rb.linearVelocity + " useGravity=" + rb.useGravity);
     }
 
     private void FixedUpdate()

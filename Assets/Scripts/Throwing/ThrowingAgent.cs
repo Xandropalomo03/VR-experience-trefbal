@@ -154,9 +154,9 @@ public class ThrowingAgent : Agent
             transform.localPosition = lp;
         }
 
-        // Aim: draai rond Y-as op basis van aimYaw mapping
-        float yawDeg = aimYaw * maxAimYaw;
-        transform.localRotation = Quaternion.Euler(0f, yawDeg, 0f);
+        // Aim wordt niet meer via body rotation toegepast: dat veroorzaakte
+        // double-apply samen met de yaw-component in de throw direction.
+        // De body rotatie blijft op de waarde van OnEpisodeBegin.
 
         // Track closest approach voor miss reward
         if (hasThrown && currentBall != null && target != null)
@@ -171,7 +171,7 @@ public class ThrowingAgent : Agent
         // Trigger gooi
         if (trigger == 1 && hasBall && !hasThrown)
         {
-            ThrowBall(throwAngle, throwPower);
+            ThrowBall(aimYaw, throwAngle, throwPower);
         }
 
         // Max steps zonder ooit te gooien
@@ -182,23 +182,28 @@ public class ThrowingAgent : Agent
         }
     }
 
-    private void ThrowBall(float angleNorm, float powerNorm)
+    private void ThrowBall(float yawNorm, float angleNorm, float powerNorm)
     {
         if (currentBall == null) return;
 
         // Mapping:
-        //   angleNorm = -1 -> minAngle (20°), 0 -> middel (40°), +1 -> maxAngle (60°)
-        //   powerNorm = -1 -> minPower (6),   0 -> middel (10),  +1 -> maxPower (14)
+        //   yawNorm   = -1 -> -maxAimYaw, 0 -> 0°,         +1 -> +maxAimYaw
+        //   angleNorm = -1 -> minAngle,   0 -> middel,     +1 -> maxAngle
+        //   powerNorm = -1 -> minPower,   0 -> middel,     +1 -> maxPower
+        float yaw = yawNorm * maxAimYaw;
         float elev = Mathf.Lerp(minAngle, maxAngle, (angleNorm + 1f) * 0.5f);
         float power = Mathf.Lerp(minPower, maxPower, (powerNorm + 1f) * 0.5f);
-        float yawDeg = transform.eulerAngles.y;
 
-        // Forward op basis van huidige rotation
-        Vector3 forward = transform.forward;
-        // Elevatie toepassen
+        // Direction berekening in agent-local frame, dan transformeren naar world.
+        // Zo werkt het correct ongeacht parent rotation.
         float elevRad = elev * Mathf.Deg2Rad;
-        Vector3 dir = new Vector3(forward.x, 0f, forward.z).normalized;
-        Vector3 throwDir = dir * Mathf.Cos(elevRad) + Vector3.up * Mathf.Sin(elevRad);
+        float yawRad = yaw * Mathf.Deg2Rad;
+        Vector3 localDir = new Vector3(
+            Mathf.Sin(yawRad) * Mathf.Cos(elevRad),
+            Mathf.Sin(elevRad),
+            Mathf.Cos(yawRad) * Mathf.Cos(elevRad)
+        );
+        Vector3 throwDir = transform.TransformDirection(localDir);
 
         // Optionele noise op richting
         if (curThrowNoise > 0f)
@@ -216,7 +221,7 @@ public class ThrowingAgent : Agent
         hasThrown = true;
         closestApproach = Vector3.Distance(currentBall.transform.position, target.transform.position);
 
-        Debug.Log("Throw computed: angle=" + elev + " power=" + power + " yaw=" + yawDeg);
+        Debug.Log("Throw computed: angle=" + elev + " power=" + power + " yaw=" + yaw + " velocity=" + velocity);
     }
 
     // Aangeroepen door ThrowableBall bij raken doel
