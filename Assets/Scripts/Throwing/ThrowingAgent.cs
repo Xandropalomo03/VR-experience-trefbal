@@ -100,6 +100,8 @@ public class ThrowingAgent : Agent
         hasBall = true;
     }
 
+    // Vector observation size = 12 (let op: stel dit ook zo in op de
+    // BehaviorParameters inspector, anders gaat ml-agents huilen).
     public override void CollectObservations(VectorSensor sensor)
     {
         Vector3 targetPos = target != null ? target.transform.position : transform.position;
@@ -130,6 +132,22 @@ public class ThrowingAgent : Agent
 
         // Target grootte
         sensor.AddObservation(curTargetSize / 2f);
+
+        // Hoek tussen agent forward en richting-naar-target als (sin, cos)
+        float angleToTarget = ComputeAngleToTarget();
+        float angleRad = angleToTarget * Mathf.Deg2Rad;
+        sensor.AddObservation(Mathf.Sin(angleRad));
+        sensor.AddObservation(Mathf.Cos(angleRad));
+    }
+
+    private float ComputeAngleToTarget()
+    {
+        if (target == null) return 0f;
+        Vector3 toTarget = target.transform.position - transform.position;
+        toTarget.y = 0f;
+        if (toTarget.sqrMagnitude < 1e-6f) return 0f;
+        toTarget.Normalize();
+        return Vector3.SignedAngle(transform.forward, toTarget, Vector3.up);
     }
 
     public override void OnActionReceived(ActionBuffers actions)
@@ -165,8 +183,18 @@ public class ThrowingAgent : Agent
             if (d < closestApproach) closestApproach = d;
         }
 
-        // Tijd-penalty
-        AddReward(-0.001f);
+        // Tijd-penalty (milder dan voorheen)
+        AddReward(-0.0002f);
+
+        // Aim bonus: zolang hij de bal heeft, beloon naar het doel draaien.
+        // Max +0.002 per step bij perfect mikken, 0 bij |hoek| >= 30°.
+        if (hasBall)
+        {
+            float angleToTarget = ComputeAngleToTarget();
+            float absAngle = Mathf.Abs(angleToTarget);
+            if (absAngle < 30f)
+                AddReward(0.002f * (1f - absAngle / 30f));
+        }
 
         // Trigger gooi
         if (trigger == 1 && hasBall && !hasThrown)
@@ -177,7 +205,7 @@ public class ThrowingAgent : Agent
         // Max steps zonder ooit te gooien
         if (StepCount >= MaxStep - 1 && !hasThrown)
         {
-            AddReward(-0.5f);
+            AddReward(-0.1f);
             EndEpisode();
         }
     }
@@ -238,9 +266,9 @@ public class ThrowingAgent : Agent
         float distToCenter = Vector3.Distance(hitPoint, target.transform.position);
 
         if (distToCenter < 0.2f)
-            AddReward(1.0f);
+            AddReward(1.5f);
         else
-            AddReward(0.5f);
+            AddReward(0.7f);
 
         // Proximity bonus
         float proxBonus = 0.3f * (1f - Mathf.Min(distToCenter / 1f, 1f));
@@ -254,11 +282,11 @@ public class ThrowingAgent : Agent
     {
         Debug.Log("Miss, closestApproach=" + closestApproach);
 
-        AddReward(-0.3f);
+        AddReward(-0.1f);
 
-        // Bonus op basis van closest approach
+        // Bonus op basis van closest approach (nu max 0.5 ipv 0.3)
         float dist = closestApproach;
-        float bonus = 0.3f * (1f - Mathf.Min(dist / 5f, 1f));
+        float bonus = 0.5f * (1f - Mathf.Min(dist / 5f, 1f));
         AddReward(bonus);
 
         EndEpisode();
