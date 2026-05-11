@@ -33,3 +33,15 @@
 - Maar: agent leert "altijd naar linkermuur rennen"
 - Lokaal optimum, geen reactief gedrag
 - Goed voorbeeld voor tutorial: cijfers ≠ goed gedrag
+
+## v8 doorbraak
+
+- Sterkere survival reward (0.005 -> 0.01) + Decision Period (5 -> 3)
+- Direct vanaf step 10k positieve Mean Reward
+- Hoge Std (0.6+) = diverse strategieen, geen lokaal optimum
+
+## v12 final dodge model
+
+- Mean Reward +2.37 op 500k steps
+- Cruciaal: agent op eigen helft + raycasts + spawn van 3 kanten (geen achter)
+- Veel beter gedrag dan v11 omdat training en inference setup nu matchen
