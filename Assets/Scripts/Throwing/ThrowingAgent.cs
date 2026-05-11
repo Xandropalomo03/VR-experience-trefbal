@@ -22,6 +22,7 @@ public class ThrowingAgent : Agent
     [SerializeField] private float maxAimYaw = 45f;
 
     private Rigidbody rb;
+    private Collider agentCollider;
     private ThrowableBall currentBall;
     private bool hasBall;
 
@@ -38,6 +39,11 @@ public class ThrowingAgent : Agent
     public override void Initialize()
     {
         rb = GetComponent<Rigidbody>();
+        agentCollider = GetComponent<Collider>();
+
+        // Forceer non-kinematic zodat velocity-based movement werkt.
+        if (rb != null && rb.isKinematic)
+            rb.isKinematic = false;
     }
 
     public override void OnEpisodeBegin()
@@ -70,6 +76,8 @@ public class ThrowingAgent : Agent
 
         // Geef agent een bal
         SpawnBall();
+
+        Debug.Log("Episode begin, hasBall=" + hasBall);
     }
 
     private void SpawnBall()
@@ -88,7 +96,7 @@ public class ThrowingAgent : Agent
         if (currentBall == null)
             currentBall = ballGo.AddComponent<ThrowableBall>();
 
-        currentBall.AttachTo(ballHolder, this);
+        currentBall.AttachTo(ballHolder, this, agentCollider);
         hasBall = true;
     }
 
@@ -204,11 +212,15 @@ public class ThrowingAgent : Agent
         hasBall = false;
         hasThrown = true;
         closestApproach = Vector3.Distance(currentBall.transform.position, target.transform.position);
+
+        Debug.Log("Throw triggered, power=" + power + " yaw=" + transform.eulerAngles.y);
     }
 
     // Aangeroepen door ThrowableBall bij raken doel
     public void NotifyTargetHit(Vector3 hitPoint)
     {
+        Debug.Log("Hit at " + hitPoint);
+
         if (target == null)
         {
             EndEpisode();
@@ -232,6 +244,8 @@ public class ThrowingAgent : Agent
     // Aangeroepen door ThrowableBall bij missen (grond/muur)
     public void NotifyMiss()
     {
+        Debug.Log("Miss, closestApproach=" + closestApproach);
+
         AddReward(-0.3f);
 
         // Bonus op basis van closest approach
