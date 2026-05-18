@@ -12,6 +12,8 @@ public class DodgeballAgent : BaseSportAgent
 
     public override void OnEpisodeBegin()
     {
+        DebugLogger.Log("DODGE", $"OnEpisodeBegin pos={transform.localPosition} spawnerNull={ballSpawner == null}");
+
         transform.localPosition = new Vector3(
             Random.Range(-4f, 4f),
             1f,
@@ -58,6 +60,7 @@ public class DodgeballAgent : BaseSportAgent
 
     public void OnHitByBall()
     {
+        DebugLogger.Log("DODGE", $"OnHitByBall step={StepCount}");
         AddReward(-1f);
         EndEpisode();
     }

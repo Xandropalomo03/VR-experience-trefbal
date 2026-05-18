@@ -14,6 +14,8 @@ public class CatchAgent : BaseSportAgent
     // ---------------- EPISODE ----------------
     public override void OnEpisodeBegin()
     {
+        DebugLogger.Log("CATCH", $"OnEpisodeBegin pos={transform.position}");
+
         attemptedCatch = false;
         lastRotation = -1;
 
@@ -75,12 +77,12 @@ public class CatchAgent : BaseSportAgent
         if (attemptedCatch)
         {
             AddReward(1f);
-            Debug.Log("SUCCESSFUL CATCH");
+            DebugLogger.Log("CATCH", "SUCCESSFUL CATCH");
         }
         else
         {
             AddReward(-1f);
-            Debug.Log("MISS / NO CATCH");
+            DebugLogger.Log("CATCH", "MISS / NO CATCH");
         }
 
         Destroy(other.gameObject);
@@ -92,7 +94,7 @@ public class CatchAgent : BaseSportAgent
         if (!collision.gameObject.CompareTag("Ball")) return;
 
         AddReward(-1f);
-        Debug.Log("HARD HIT");
+        DebugLogger.Log("CATCH", "HARD HIT");
 
         Destroy(collision.gameObject);
         EndEpisode();

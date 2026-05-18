@@ -84,7 +84,7 @@ public class ThrowingAgent : BaseSportAgent
         // Geef agent een bal
         SpawnBall();
 
-        Debug.Log("Episode begin, hasBall=" + hasBall);
+        DebugLogger.Log("THROW", $"OnEpisodeBegin pos={transform.localPosition} targetDist={curTargetDistance} size={curTargetSize} hasBall={hasBall}");
     }
 
     private void SpawnBall()
@@ -105,6 +105,7 @@ public class ThrowingAgent : BaseSportAgent
 
         currentBall.AttachTo(ballHolder, this, agentCollider);
         hasBall = true;
+        DebugLogger.Log("THROW", "hasBall true (ball spawned, attached to holder)");
     }
 
     // Vector observation size = 10. Volgorde MOET stabiel blijven; deze
@@ -256,13 +257,13 @@ public class ThrowingAgent : BaseSportAgent
         hasThrown = true;
         closestApproach = Vector3.Distance(currentBall.transform.position, target.transform.position);
 
-        Debug.Log("Throw computed: angle=" + elev + " power=" + power + " yaw=" + yaw + " velocity=" + velocity);
+        DebugLogger.Log("THROW", $"hasBall false (released) angle={elev:F1} power={power:F1} yaw={yaw:F1} velocity={velocity}");
     }
 
     // Aangeroepen door ThrowableBall bij raken doel
     public void NotifyTargetHit(Vector3 hitPoint)
     {
-        Debug.Log("Hit at " + hitPoint);
+        DebugLogger.Log("THROW", $"NotifyTargetHit at {hitPoint}");
 
         if (target == null)
         {
@@ -287,7 +288,7 @@ public class ThrowingAgent : BaseSportAgent
     // Aangeroepen door ThrowableBall bij missen (grond/muur)
     public void NotifyMiss()
     {
-        Debug.Log("Miss, closestApproach=" + closestApproach);
+        DebugLogger.Log("THROW", $"NotifyMiss closestApproach={closestApproach:F2}");
 
         AddReward(-0.1f);
 
