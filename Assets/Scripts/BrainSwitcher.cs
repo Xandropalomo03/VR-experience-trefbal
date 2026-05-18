@@ -1,4 +1,5 @@
 using UnityEngine;
+using Unity.MLAgents;
 
 // Manuele brain switcher voor de multi-brain POC scene.
 // Zit op een Manager GameObject in MultiBrainScene en zet één van de drie
@@ -54,6 +55,11 @@ public class BrainSwitcher : MonoBehaviour
             Debug.Log("BrainSwitcher start, active brain: " + currentActive.name);
         if (initialSupport != null)
             Debug.Log("Support active: " + initialSupport.name);
+
+        // Trigger OnEpisodeBegin op de initiële agent — anders blijven
+        // episode-init dingen (bal spawnen, target reset) achterwege bij
+        // scene start.
+        ForceNewEpisode(currentActive);
     }
 
     private void Update()
@@ -98,6 +104,11 @@ public class BrainSwitcher : MonoBehaviour
         Debug.Log("Switched to: " + newActive.name);
         if (newSupport != null)
             Debug.Log("Support active: " + newSupport.name);
+
+        // Forceer een nieuwe episode op de net-geactiveerde agent. Zonder dit
+        // roept ML-Agents geen OnEpisodeBegin() aan na enkel SetActive(true),
+        // waardoor o.a. ThrowingAgent zonder bal blijft staan.
+        ForceNewEpisode(newActive);
     }
 
     // Voor latere automatic switching: accepteer een naam i.p.v. een ref.
@@ -129,6 +140,18 @@ public class BrainSwitcher : MonoBehaviour
         if (a != null) a.SetActive(a == target);
         if (b != null) b.SetActive(b == target);
         if (c != null) c.SetActive(c == target);
+    }
+
+    // Null-safe wrapper rond Agent.EndEpisode(). Op de volgende frame triggert
+    // ML-Agents dan automatisch OnEpisodeBegin() op die agent.
+    private void ForceNewEpisode(GameObject go)
+    {
+        if (go == null) return;
+        if (go.TryGetComponent(out Agent agent))
+        {
+            agent.EndEpisode();
+            Debug.Log("Forced new episode on: " + go.name);
+        }
     }
 
     // Map agent -> bijbehorend support object. Geen typecheck, puur op
