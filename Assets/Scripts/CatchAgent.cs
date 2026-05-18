@@ -3,7 +3,7 @@ using Unity.MLAgents;
 using Unity.MLAgents.Actuators;
 using Unity.MLAgents.Sensors;
 
-public class CatchAgent : Agent
+public class CatchAgent : BaseSportAgent
 {
     [Header("Catch Zone")]
     public Renderer catchZoneRenderer;

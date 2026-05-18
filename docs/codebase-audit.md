@@ -15,7 +15,8 @@ Assets/
 │   ├── BallSpawner.cs             (dodgeball)
 │   ├── Ball_catching.cs           (catching variant)
 │   ├── BallSpawner_catching.cs    (catching variant)
-│   ├── CatchAgent .cs             (let op spatie in filename)
+│   ├── BaseSportAgent.cs          (abstract base, shared component caches)
+│   ├── CatchAgent.cs
 │   ├── DodgeballAgent.cs
 │   └── Throwing/
 │       ├── Target.cs
@@ -189,7 +190,7 @@ Scene bevestigt: `NumContinuousActions: 5`, BranchSizes = `[2]`.
 
 ### 2.3 CatchAgent
 
-- **Path:** `Assets/Scripts/CatchAgent .cs` (let op spatie in bestandsnaam)
+- **Path:** `Assets/Scripts/CatchAgent.cs`
 - **Class:** `CatchAgent : Agent`
 - **Behavior Name (scene):** `CatchAgent` (catching training.unity)
 - **BehaviorType:** 2 (Inference Only)
@@ -276,7 +277,7 @@ komen.
 | Model | Agent | Behavior name match | Opmerkingen |
 |---|---|---|---|
 | `Assets/Models/DodgeballAgent.onnx` | DodgeballAgent | ✅ | Geassigned in TrainingScene. |
-| `Assets/Models/ThrowingAgent_v2.onnx` | ThrowingAgent | ⚠️ obs-shape mismatch | Scene heeft `VectorObservationSize: 10` terwijl code 12 obs schrijft — model is waarschijnlijk getraind op 10. |
+| `Assets/Models/ThrowingAgent_v2.onnx` | ThrowingAgent | ✅ | ONNX input shape `[batch, 10]`. Code, scene en model staan nu allemaal op 10 obs. |
 | `Assets/Models/CatchAgent.onnx` | CatchAgent | ✅ | Geassigned in catching training. |
 
 ## 6. Comparison tables
@@ -286,7 +287,7 @@ komen.
 | Agent | Vector obs (code) | Vector stack | Ray sensor | Ray feature count | Totaal features |
 |---|---:|---:|---|---:|---:|
 | DodgeballAgent | 2 | 1 | 5 rays / 90° / 2 tags / stack 3 | 132 | ~134 |
-| ThrowingAgent | 12 (scene: 10 ⚠️) | 1 | — | 0 | 12 (of 10) |
+| ThrowingAgent | 10 | 1 | — | 0 | 10 |
 | CatchAgent | 1 (placeholder) | 3 | 5 rays / 60° / 1 tag / stack 1 | 33 | ~36 |
 
 ### 6.2 Action summary
@@ -307,17 +308,15 @@ komen.
 
 ## 7. Opvallende issues en inconsistenties
 
-1. **ThrowingAgent obs-mismatch.** Code = 12 observations, scene
-   BehaviorParameters = `VectorObservationSize: 10`. Het bestaande
-   `ThrowingAgent_v2.onnx` model is dus ofwel op 10 obs getraind (en zal
-   crashen of garbage produceren met de huidige code) ofwel op 12 en is de
-   scene niet bijgewerkt. **Action item:** bepalen welk van de twee
-   correct is, scene of code aanpassen en eventueel hertrainen.
+1. ~~**ThrowingAgent obs-mismatch.**~~ **Opgelost.** ONNX-inspectie
+   bevestigde dat `ThrowingAgent_v2.onnx` input shape `[batch, 10]` heeft;
+   code is teruggebracht naar 10 obs (sin/cos `angleToTarget` verwijderd).
+   Scene stond al op 10. Canonical obs count gedocumenteerd bovenaan
+   `ThrowingAgent.cs`.
 
-2. **Bestandsnaam met spatie:** `Assets/Scripts/CatchAgent .cs` heeft een
-   trailing space vóór `.cs`. Werkt in Unity maar is bug-magneet bij
-   command-line tools, git op Linux runners, en zoek/replace acties.
-   Aanrader: hernoem naar `CatchAgent.cs`.
+2. ~~**Bestandsnaam met spatie.**~~ **Opgelost.** Hernoemd naar
+   `Assets/Scripts/CatchAgent.cs` (incl. `.cs.meta` zodat Unity-GUID
+   behouden blijft).
 
 3. **Naming inconsistency:** Catching variant gebruikt
    `Ball_catching.cs` / `BallSpawner_catching.cs` (lowercase suffix) terwijl
@@ -361,6 +360,7 @@ daardoor niet realistisch zonder zware aanpassingen. Praktischer:
 - Maak één multi-brain scene waarin alle drie de behaviors tegelijk
   geregistreerd staan onder verschillende behavior names, en elk hun eigen
   `.onnx` model laden in inference.
-- Eventueel een gedeelde `BaseSportAgent` met alleen shared boilerplate
-  (`myArena`, `Rigidbody` cache, helpers voor reward logging), niet voor
-  obs/action.
+- Een gedeelde `BaseSportAgent` met alleen shared boilerplate
+  (`myArena`, `Rigidbody` + `Collider` cache) is aanwezig in
+  `Assets/Scripts/BaseSportAgent.cs`. Alle drie agents erven er nu van.
+  Bevat bewust geen obs- of action-logic.

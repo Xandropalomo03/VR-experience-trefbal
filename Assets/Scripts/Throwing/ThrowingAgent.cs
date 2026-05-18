@@ -4,7 +4,16 @@ using Unity.MLAgents.Actuators;
 using Unity.MLAgents.Sensors;
 
 // Agent die leert om een bal naar een doel te gooien.
-public class ThrowingAgent : Agent
+//
+// Canonical vector observation size: 10.
+// Dit is wat de huidige BehaviorParameters in ThrowingTrainingScene.unity
+// vragen, en wat ThrowingAgent_v2.onnx (input shape [batch, 10]) verwacht.
+// Eerdere versies hebben kortstondig 12 obs geschreven (twee extra sin/cos
+// van de hoek-naar-target); die zijn weer verwijderd zodat code, scene en
+// model consistent zijn. Aim-info zit nog steeds impliciet via toTarget.x/z
+// en de agent yaw, en de aim-bonus reward gebruikt ComputeAngleToTarget()
+// los van de observation vector.
+public class ThrowingAgent : BaseSportAgent
 {
     [Header("References")]
     [SerializeField] private Transform ballHolder;
@@ -21,8 +30,7 @@ public class ThrowingAgent : Agent
     [SerializeField] private float maxPower = 14f;
     [SerializeField] private float maxAimYaw = 45f;
 
-    private Rigidbody rb;
-    private Collider agentCollider;
+    // rb en agentCollider worden door BaseSportAgent.Initialize() gevuld.
     private ThrowableBall currentBall;
     private bool hasBall;
 
@@ -38,8 +46,7 @@ public class ThrowingAgent : Agent
 
     public override void Initialize()
     {
-        rb = GetComponent<Rigidbody>();
-        agentCollider = GetComponent<Collider>();
+        base.Initialize();
 
         // Forceer non-kinematic zodat velocity-based movement werkt.
         if (rb != null && rb.isKinematic)
@@ -100,44 +107,44 @@ public class ThrowingAgent : Agent
         hasBall = true;
     }
 
-    // Vector observation size = 12 (let op: stel dit ook zo in op de
-    // BehaviorParameters inspector, anders gaat ml-agents huilen).
+    // Vector observation size = 10. Volgorde MOET stabiel blijven; deze
+    // shape is gekoppeld aan ThrowingAgent_v2.onnx en aan
+    // ThrowingTrainingScene.unity (BehaviorParameters.VectorObservationSize=10).
     public override void CollectObservations(VectorSensor sensor)
     {
         Vector3 targetPos = target != null ? target.transform.position : transform.position;
         Vector3 targetVel = target != null ? target.CurrentVelocity : Vector3.zero;
         Vector3 toTarget = targetPos - transform.position;
 
-        // Relatieve positie target (genormaliseerd)
+        // [0..1] Relatieve positie target (genormaliseerd)
         sensor.AddObservation(toTarget.x / 10f);
         sensor.AddObservation(toTarget.z / 10f);
 
-        // Target snelheid
+        // [2..3] Target snelheid
         sensor.AddObservation(targetVel.x / 5f);
         sensor.AddObservation(targetVel.z / 5f);
 
-        // Agent rotation als sin/cos
+        // [4..5] Agent rotation als sin/cos
         float yawRad = transform.eulerAngles.y * Mathf.Deg2Rad;
         sensor.AddObservation(Mathf.Sin(yawRad));
         sensor.AddObservation(Mathf.Cos(yawRad));
 
-        // Heeft de agent een bal?
+        // [6] Heeft de agent een bal?
         sensor.AddObservation(hasBall ? 1f : 0f);
 
-        // Tijd in episode
+        // [7] Tijd in episode
         sensor.AddObservation(MaxStep > 0 ? (float)StepCount / MaxStep : 0f);
 
-        // Afstand tot doel
+        // [8] Afstand tot doel
         sensor.AddObservation(toTarget.magnitude / 10f);
 
-        // Target grootte
+        // [9] Target grootte
         sensor.AddObservation(curTargetSize / 2f);
 
-        // Hoek tussen agent forward en richting-naar-target als (sin, cos)
-        float angleToTarget = ComputeAngleToTarget();
-        float angleRad = angleToTarget * Mathf.Deg2Rad;
-        sensor.AddObservation(Mathf.Sin(angleRad));
-        sensor.AddObservation(Mathf.Cos(angleRad));
+        // (sin/cos angleToTarget zaten hier ooit als obs 10/11 maar zijn
+        // verwijderd: niet getraind in v2, model verwacht shape [batch, 10].
+        // Voor reward shaping wordt ComputeAngleToTarget() nog steeds gebruikt
+        // in OnActionReceived.)
     }
 
     private float ComputeAngleToTarget()

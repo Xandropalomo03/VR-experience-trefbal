@@ -3,19 +3,12 @@ using Unity.MLAgents;
 using Unity.MLAgents.Actuators;
 using Unity.MLAgents.Sensors;
 
-public class DodgeballAgent : Agent
+public class DodgeballAgent : BaseSportAgent
 {
     [SerializeField] private float moveSpeed = 4f;
     [SerializeField] private BallSpawner ballSpawner;
 
-    private Rigidbody rb;
-    private Transform myArena;
-
-    public override void Initialize()
-    {
-        rb = GetComponent<Rigidbody>();
-        myArena = transform.parent;
-    }
+    // rb en myArena worden door BaseSportAgent.Initialize() gevuld.
 
     public override void OnEpisodeBegin()
     {
