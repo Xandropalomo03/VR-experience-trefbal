@@ -16,6 +16,13 @@ public class BrainSwitcher : MonoBehaviour
     public GameObject catchAgent;
     public GameObject throwAgent;
 
+    [Header("Support objects (optional)")]
+    // Per-brain support GameObjects. Mogen leeg blijven; null wordt
+    // overgeslagen door de SetActive-helper.
+    public GameObject dodgeSupport;   // bv. BallSpawner
+    public GameObject catchSupport;   // bv. BallSpawner_Catching
+    public GameObject throwSupport;   // bv. Target
+
     [Header("Keys")]
     public KeyCode dodgeKey = KeyCode.Alpha1;
     public KeyCode catchKey = KeyCode.Alpha2;
@@ -38,11 +45,15 @@ public class BrainSwitcher : MonoBehaviour
             else initial = dodgeAgent; // niemand actief — forceer dodge
         }
 
-        SetOnlyActive(initial);
+        SetOnlyActive(dodgeAgent, catchAgent, throwAgent, initial);
+        GameObject initialSupport = SupportFor(initial);
+        SetOnlyActive(dodgeSupport, catchSupport, throwSupport, initialSupport);
         currentActive = initial;
 
         if (currentActive != null)
             Debug.Log("BrainSwitcher start, active brain: " + currentActive.name);
+        if (initialSupport != null)
+            Debug.Log("Support active: " + initialSupport.name);
     }
 
     private void Update()
@@ -70,7 +81,11 @@ public class BrainSwitcher : MonoBehaviour
             hasSaved = true;
         }
 
-        SetOnlyActive(newActive);
+        SetOnlyActive(dodgeAgent, catchAgent, throwAgent, newActive);
+
+        // Bijbehorend support object meeschakelen.
+        GameObject newSupport = SupportFor(newActive);
+        SetOnlyActive(dodgeSupport, catchSupport, throwSupport, newSupport);
 
         // Pas saved transform toe op de nieuwe actieve agent.
         if (hasSaved)
@@ -81,6 +96,8 @@ public class BrainSwitcher : MonoBehaviour
 
         currentActive = newActive;
         Debug.Log("Switched to: " + newActive.name);
+        if (newSupport != null)
+            Debug.Log("Support active: " + newSupport.name);
     }
 
     // Voor latere automatic switching: accepteer een naam i.p.v. een ref.
@@ -105,11 +122,23 @@ public class BrainSwitcher : MonoBehaviour
         }
     }
 
-    // Zet één agent actief en de andere twee uit. Null-refs worden overgeslagen.
-    private void SetOnlyActive(GameObject target)
+    // Zet één van de drie slots actief en de andere uit. Null-refs worden
+    // overgeslagen. Generiek bruikbaar voor zowel agents als supports.
+    private void SetOnlyActive(GameObject a, GameObject b, GameObject c, GameObject target)
     {
-        if (dodgeAgent != null) dodgeAgent.SetActive(dodgeAgent == target);
-        if (catchAgent != null) catchAgent.SetActive(catchAgent == target);
-        if (throwAgent != null) throwAgent.SetActive(throwAgent == target);
+        if (a != null) a.SetActive(a == target);
+        if (b != null) b.SetActive(b == target);
+        if (c != null) c.SetActive(c == target);
+    }
+
+    // Map agent -> bijbehorend support object. Geen typecheck, puur op
+    // referentie-identiteit zoals in de Inspector ingevuld.
+    private GameObject SupportFor(GameObject agent)
+    {
+        if (agent == null) return null;
+        if (agent == dodgeAgent) return dodgeSupport;
+        if (agent == catchAgent) return catchSupport;
+        if (agent == throwAgent) return throwSupport;
+        return null;
     }
 }
