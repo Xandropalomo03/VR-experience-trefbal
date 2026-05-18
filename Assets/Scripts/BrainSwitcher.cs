@@ -56,10 +56,11 @@ public class BrainSwitcher : MonoBehaviour
         if (initialSupport != null)
             Debug.Log("Support active: " + initialSupport.name);
 
-        // Trigger OnEpisodeBegin op de initiële agent — anders blijven
-        // episode-init dingen (bal spawnen, target reset) achterwege bij
-        // scene start.
-        ForceNewEpisode(currentActive);
+        // Geen ForceNewEpisode hier: ML-Agents roept OnEpisodeBegin()
+        // sowieso aan bij Initialize() voor de initieel-actieve agent.
+        // Het zelf aanroepen vóór de sensors klaar zijn geeft NRE in
+        // Agent.UpdateSensors. Bij SwitchTo() hebben we het wél nodig
+        // omdat een agent dan runtime van inactive naar active gaat.
     }
 
     private void Update()
