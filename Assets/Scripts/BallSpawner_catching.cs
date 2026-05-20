@@ -6,9 +6,9 @@ public class BallSpawner_Catching : MonoBehaviour
     public GameObject ballPrefab;
     public Transform target;
 
-    [Header("Spawn Area")]
-    public float spawnRadius = 8f;
-    public float arcAngle = 120f; // totale boog in graden
+    [Header("Random X Spawn")]
+    public float minX = -8f;
+    public float maxX = 8f;
 
     [Header("Spawn Timing")]
     public float minSpawnInterval = 0.5f;
@@ -20,6 +20,7 @@ public class BallSpawner_Catching : MonoBehaviour
 
     private float timer;
     private float nextSpawnTime;
+
     private GameObject currentBall;
 
     private void Start()
@@ -29,7 +30,7 @@ public class BallSpawner_Catching : MonoBehaviour
 
     private void Update()
     {
-        // Spawn pas nieuwe bal als vorige weg is
+        // wacht tot vorige bal weg is
         if (currentBall != null) return;
 
         timer += Time.deltaTime;
@@ -44,7 +45,10 @@ public class BallSpawner_Catching : MonoBehaviour
 
     private void SetNextSpawnTime()
     {
-        nextSpawnTime = Random.Range(minSpawnInterval, maxSpawnInterval);
+        nextSpawnTime = Random.Range(
+            minSpawnInterval,
+            maxSpawnInterval
+        );
     }
 
     private void SpawnBall()
@@ -52,44 +56,50 @@ public class BallSpawner_Catching : MonoBehaviour
         if (ballPrefab == null || target == null)
             return;
 
-        float halfArc = arcAngle / 2f;
-        float randomAngle = Random.Range(-halfArc, halfArc);
+        // pak huidige positie van spawner
+        Vector3 spawnPosition = transform.position;
 
-        // Spawn vóór agent in symmetrische boog
-        Vector3 baseForward = target.forward;
+        // random X offset
+        spawnPosition.x += Random.Range(minX, maxX);
 
-        Vector3 direction =
-            Quaternion.Euler(0f, randomAngle, 0f) * baseForward;
+        // zelfde hoogte behouden
+        spawnPosition.y = transform.position.y;
 
-        Vector3 spawnPosition =
-            target.position + direction.normalized * spawnRadius;
+        // zelfde Z behouden
+        spawnPosition.z = transform.position.z;
 
-        spawnPosition.y = target.position.y;
-
+        // spawn bal
         currentBall = Instantiate(
             ballPrefab,
             spawnPosition,
             Quaternion.identity
         );
 
-        // Link bal terug naar spawner
-        Ball_Catching ballScript = currentBall.GetComponent<Ball_Catching>();
+        // link terug naar spawner
+        Ball_Catching ballScript =
+            currentBall.GetComponent<Ball_Catching>();
+
         if (ballScript != null)
         {
             ballScript.spawner = this;
         }
 
-        // Laat bal naar target vliegen
-        Vector3 throwDirection = target.position - spawnPosition;
-        throwDirection.y = 0f;
-        throwDirection.Normalize();
+        // richting naar target
+        Vector3 direction =
+            target.position - spawnPosition;
 
-        float speed = Random.Range(minSpeed, maxSpeed);
+        direction.y = 0f;
+        direction.Normalize();
 
-        Rigidbody rb = currentBall.GetComponent<Rigidbody>();
+        float speed =
+            Random.Range(minSpeed, maxSpeed);
+
+        Rigidbody rb =
+            currentBall.GetComponent<Rigidbody>();
+
         if (rb != null)
         {
-            rb.linearVelocity = throwDirection * speed;
+            rb.linearVelocity = direction * speed;
         }
     }
 
@@ -98,31 +108,20 @@ public class BallSpawner_Catching : MonoBehaviour
         currentBall = null;
     }
 
-    // Debug visualisatie
+    // debug lijnen in scene view
     private void OnDrawGizmos()
     {
-        if (target == null) return;
-
-        // Midden van boog
-        Gizmos.color = Color.green;
-        Gizmos.DrawRay(target.position, target.forward * 3f);
-
-        // Achterkant
         Gizmos.color = Color.red;
-        Gizmos.DrawRay(target.position, -target.forward * 3f);
 
-        // Grenzen boog
-        Gizmos.color = Color.yellow;
+        Vector3 left =
+            transform.position + Vector3.right * minX;
 
-        float halfArc = arcAngle / 2f;
+        Vector3 right =
+            transform.position + Vector3.right * maxX;
 
-        Vector3 leftDir =
-            Quaternion.Euler(0f, -halfArc, 0f) * target.forward;
+        Gizmos.DrawSphere(left, 0.3f);
+        Gizmos.DrawSphere(right, 0.3f);
 
-        Vector3 rightDir =
-            Quaternion.Euler(0f, halfArc, 0f) * target.forward;
-
-        Gizmos.DrawRay(target.position, leftDir * spawnRadius);
-        Gizmos.DrawRay(target.position, rightDir * spawnRadius);
+        Gizmos.DrawLine(left, right);
     }
 }
