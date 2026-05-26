@@ -3,26 +3,21 @@ using Unity.MLAgents;
 using Unity.MLAgents.Actuators;
 using Unity.MLAgents.Sensors;
 
-public class DodgeballAgent : Agent
+public class DodgeballAgent : BaseSportAgent
 {
     [SerializeField] private float moveSpeed = 4f;
     [SerializeField] private BallSpawner ballSpawner;
 
-    private Rigidbody rb;
-    private Transform myArena;
-
-    public override void Initialize()
-    {
-        rb = GetComponent<Rigidbody>();
-        myArena = transform.parent;
-    }
+    // rb en myArena worden door BaseSportAgent.Initialize() gevuld.
 
     public override void OnEpisodeBegin()
     {
+        DebugLogger.Log("DODGE", $"OnEpisodeBegin pos={transform.localPosition} spawnerNull={ballSpawner == null}");
+
         transform.localPosition = new Vector3(
             Random.Range(-4f, 4f),
             1f,
-            Random.Range(-4f, 4f)
+            Random.Range(-4f, -1f)
         );
         rb.linearVelocity = Vector3.zero;
         rb.angularVelocity = Vector3.zero;
@@ -37,53 +32,9 @@ public class DodgeballAgent : Agent
 
     public override void CollectObservations(VectorSensor sensor)
     {
-        sensor.AddObservation(transform.localPosition.x / 5f);
-        sensor.AddObservation(transform.localPosition.z / 5f);
         sensor.AddObservation(rb.linearVelocity.x / moveSpeed);
         sensor.AddObservation(rb.linearVelocity.z / moveSpeed);
-
-        GameObject closestBall = FindClosestBall();
-        if (closestBall != null)
-        {
-            Vector3 ballRelative = closestBall.transform.position - transform.position;
-            Vector3 ballVel = closestBall.GetComponent<Rigidbody>().linearVelocity;
-
-            sensor.AddObservation(ballRelative.x / 10f);
-            sensor.AddObservation(ballRelative.z / 10f);
-            sensor.AddObservation(ballVel.x / 10f);
-            sensor.AddObservation(ballVel.z / 10f);
-            sensor.AddObservation(1f);
-        }
-        else
-        {
-            sensor.AddObservation(0f);
-            sensor.AddObservation(0f);
-            sensor.AddObservation(0f);
-            sensor.AddObservation(0f);
-            sensor.AddObservation(0f);
-        }
     }
-
-private GameObject FindClosestBall()
-{
-    GameObject[] balls = GameObject.FindGameObjectsWithTag("Ball");
-    if (balls.Length == 0) return null;
-
-    GameObject closest = null;
-    float minDist = Mathf.Infinity;
-    foreach (GameObject ball in balls)
-    {
-        if (myArena != null && ball.transform.parent != myArena) continue;
-
-        float dist = Vector3.Distance(transform.position, ball.transform.position);
-        if (dist < minDist)
-        {
-            minDist = dist;
-            closest = ball;
-        }
-    }
-    return closest;
-}
 
     public override void OnActionReceived(ActionBuffers actions)
     {
@@ -109,6 +60,7 @@ private GameObject FindClosestBall()
 
     public void OnHitByBall()
     {
+        DebugLogger.Log("DODGE", $"OnHitByBall step={StepCount}");
         AddReward(-1f);
         EndEpisode();
     }

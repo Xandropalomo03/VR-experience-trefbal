@@ -12,13 +12,13 @@ behaviors:
       learning_rate_schedule: linear
     network_settings:
       normalize: false
-      hidden_units: 128
-      num_layers: 2
+      hidden_units: 256
+      num_layers: 3
     reward_signals:
       extrinsic:
         gamma: 0.99
         strength: 1.0
-    max_steps: 300000
+    max_steps: 500000
     time_horizon: 64
     summary_freq: 10000
     checkpoint_interval: 50000
