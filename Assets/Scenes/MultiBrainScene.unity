@@ -422,7 +422,10 @@ PrefabInstance:
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
-    m_AddedComponents: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 964844127714832178, guid: a6ab8815835d7364abd079c1f98d64bf, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1990000001}
   m_SourcePrefab: {fileID: 100100000, guid: a6ab8815835d7364abd079c1f98d64bf, type: 3}
 --- !u!4 &318673335 stripped
 Transform:
@@ -759,7 +762,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 865185646}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 113b84fabf0be4f41a898bd7716d2868, type: 3}
   m_Name: 
@@ -1631,6 +1634,128 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 8046005859740998886, guid: 547399a886f464e47ad81e5f38fafa60, type: 3}
   m_PrefabInstance: {fileID: 2064951519}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &1990000001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 318673334}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 158513962}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7c3f1a9e2b4d4c5fa1e0b8d6c9f20311, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  moveSpeed: 1.5
+  areaMin: {x: -4, y: -4}
+  areaMax: {x: 4, y: -1}
+  arriveThreshold: 0.4
+  minPause: 0.3
+  maxPause: 1.5
+--- !u!1 &1990000010
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1990000011}
+  - component: {fileID: 1990000012}
+  m_Layer: 0
+  m_Name: MatchCoordinator
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1990000011
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1990000010}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1990000012
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1990000010}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3e8b6d4c1f2a4b7c9d0e5a6f8c1b2d34, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  agentTransform: {fileID: 318673335}
+  idleMovement: {fileID: 1990000001}
+  brainSwitcher: {fileID: 659191091}
+  ballTag: Ball
+  activationDistance: 8
+  minBallSpeed: 0.5
+  minApproachSpeed: 1
+  sameArenaOnly: 1
+  returnToIdleDelay: 1.5
+--- !u!1 &1990000020
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1990000021}
+  - component: {fileID: 1990000022}
+  m_Layer: 0
+  m_Name: TestBallThrower
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &1990000021
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1990000020}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1990000022
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1990000020}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9a2c4e6f8b1d3a5c7e9f0b2d4c6a8e15, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  ballPrefab: {fileID: 5598007239552481760, guid: 0005e0ee9b4360a4796a12fbea685b20, type: 3}
+  target: {fileID: 318673335}
+  launchKey: 32
+  spawnDistance: 8
+  spawnHeight: 1
+  ballSpeed: 8
+  aimNoise: 0.5
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -1639,3 +1764,5 @@ SceneRoots:
   - {fileID: 31580167}
   - {fileID: 275875026}
   - {fileID: 659191092}
+  - {fileID: 1990000011}
+  - {fileID: 1990000021}
