@@ -5,14 +5,15 @@ using Unity.MLAgents.Sensors;
 
 // Agent die leert om een bal naar een doel te gooien.
 //
-// Canonical vector observation size: 10.
-// Dit is wat de huidige BehaviorParameters in ThrowingTrainingScene.unity
-// vragen, en wat ThrowingAgent_v2.onnx (input shape [batch, 10]) verwacht.
-// Eerdere versies hebben kortstondig 12 obs geschreven (twee extra sin/cos
-// van de hoek-naar-target); die zijn weer verwijderd zodat code, scene en
-// model consistent zijn. Aim-info zit nog steeds impliciet via toTarget.x/z
-// en de agent yaw, en de aim-bonus reward gebruikt ComputeAngleToTarget()
-// los van de observation vector.
+// Canonical vector observation size: 12 (throw v3).
+// De eerste 10 obs zijn ongewijzigd t.o.v. v2; obs [10..11] zijn de sin/cos
+// van de hoek-naar-target die voor v2 tijdelijk verwijderd waren (om compat
+// te houden met ThrowingAgent_v2.onnx, input shape [batch, 10]). Voor v3
+// staan ze er weer in, zodat aim-info expliciet in de observation vector zit.
+// Het nieuwe v3 model verwacht input shape [batch, 12]; zet daarbij
+// BehaviorParameters.VectorObservationSize in ThrowingTrainingScene.unity op
+// 12. De aim-bonus reward gebruikt ComputeAngleToTarget() nog steeds los van
+// de observation vector.
 public class ThrowingAgent : BaseSportAgent
 {
     [Header("References")]
@@ -108,9 +109,10 @@ public class ThrowingAgent : BaseSportAgent
         DebugLogger.Log("THROW", "hasBall true (ball spawned, attached to holder)");
     }
 
-    // Vector observation size = 10. Volgorde MOET stabiel blijven; deze
-    // shape is gekoppeld aan ThrowingAgent_v2.onnx en aan
-    // ThrowingTrainingScene.unity (BehaviorParameters.VectorObservationSize=10).
+    // Vector observation size = 12 (throw v3). Volgorde MOET stabiel blijven;
+    // deze shape is gekoppeld aan het v3 model en aan ThrowingTrainingScene.unity
+    // (BehaviorParameters.VectorObservationSize=12). Het oude v2 model gebruikte
+    // shape [batch, 10] (zonder de sin/cos angleToTarget op index 10/11).
     public override void CollectObservations(VectorSensor sensor)
     {
         Vector3 targetPos = target != null ? target.transform.position : transform.position;
@@ -142,10 +144,14 @@ public class ThrowingAgent : BaseSportAgent
         // [9] Target grootte
         sensor.AddObservation(curTargetSize / 2f);
 
-        // (sin/cos angleToTarget zaten hier ooit als obs 10/11 maar zijn
-        // verwijderd: niet getraind in v2, model verwacht shape [batch, 10].
-        // Voor reward shaping wordt ComputeAngleToTarget() nog steeds gebruikt
-        // in OnActionReceived.)
+        // [10..11] Sin/cos van de hoek-naar-target (signed angle tussen
+        // agent forward en richting naar het doel). Teruggezet voor v3 zodat
+        // aim-info expliciet in de observation vector zit i.p.v. alleen
+        // impliciet via toTarget.x/z en de agent yaw.
+        float angleToTarget = ComputeAngleToTarget();
+        float angleRad = angleToTarget * Mathf.Deg2Rad;
+        sensor.AddObservation(Mathf.Sin(angleRad));
+        sensor.AddObservation(Mathf.Cos(angleRad));
     }
 
     private float ComputeAngleToTarget()

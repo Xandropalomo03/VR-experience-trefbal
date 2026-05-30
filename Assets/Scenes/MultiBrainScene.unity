@@ -292,8 +292,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BallSpawner_Catching
   ballPrefab: {fileID: 5598007239552481760, guid: 4cff727048d02cd419f7062dcadb5a5b, type: 3}
   target: {fileID: 1738234881}
-  spawnRadius: 3
-  arcAngle: 90
+  minX: -8
+  maxX: 8
   minSpawnInterval: 0.5
   maxSpawnInterval: 1.5
   minSpeed: 6
@@ -1245,7 +1245,7 @@ PrefabInstance:
     - target: {fileID: 1611589076312495913, guid: e225cd40d365a8344aff443dda027499, type: 3}
       propertyPath: m_Model
       value: 
-      objectReference: {fileID: 5022602860645237092, guid: 6bbc37a1bad4d6a449fe3b7241346109, type: 3}
+      objectReference: {fileID: 5022602860645237092, guid: 4b069eb2a073e774dac420de518ccee7, type: 3}
     - target: {fileID: 5526103694965802601, guid: e225cd40d365a8344aff443dda027499, type: 3}
       propertyPath: m_Name
       value: AgentCatch
@@ -1568,6 +1568,14 @@ PrefabInstance:
     - target: {fileID: 940678909316461555, guid: 547399a886f464e47ad81e5f38fafa60, type: 3}
       propertyPath: m_IsActive
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5039778089369757732, guid: 547399a886f464e47ad81e5f38fafa60, type: 3}
+      propertyPath: m_Model
+      value: 
+      objectReference: {fileID: 5022602860645237092, guid: 6b0f2d8e4d008bc469a114570f0cfb99, type: 3}
+    - target: {fileID: 5039778089369757732, guid: 547399a886f464e47ad81e5f38fafa60, type: 3}
+      propertyPath: m_BrainParameters.VectorObservationSize
+      value: 12
       objectReference: {fileID: 0}
     - target: {fileID: 8046005859740998886, guid: 547399a886f464e47ad81e5f38fafa60, type: 3}
       propertyPath: m_LocalPosition.x

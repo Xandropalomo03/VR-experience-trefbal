@@ -19,38 +19,67 @@ behaviors:
       extrinsic:
         gamma: 0.99
         strength: 1.0
-    max_steps: 700000
+    max_steps: 1500000
     time_horizon: 64
     summary_freq: 10000
 
+# v3 curriculum: kleinere distance-stappen (4 -> 4.5 -> 5 -> 5.5 -> 6 -> 7 -> 8)
+# en lagere thresholds dan v2. v2 bleef hangen op lesson 0 (~+0.25 reward)
+# omdat de drempel 0.3 te hoog was en de sprong 4m -> 5.5m te groot. Alle
+# curricula gebruiken dezelfde reward-measure en dezelfde 7 lessons met
+# identieke thresholds, zodat ze in lockstep progresseren.
 environment_parameters:
   target_distance:
     curriculum:
-      - name: Lesson0_Close
+      - name: Lesson0_4m
         completion_criteria:
           measure: reward
           behavior: Throwing
           signal_smoothing: true
           min_lesson_length: 100
-          threshold: 0.3
+          threshold: 0.2
         value: 4.0
-      - name: Lesson1_Medium
+      - name: Lesson1_4_5m
         completion_criteria:
           measure: reward
           behavior: Throwing
           signal_smoothing: true
           min_lesson_length: 100
-          threshold: 0.4
+          threshold: 0.2
+        value: 4.5
+      - name: Lesson2_5m
+        completion_criteria:
+          measure: reward
+          behavior: Throwing
+          signal_smoothing: true
+          min_lesson_length: 100
+          threshold: 0.2
+        value: 5.0
+      - name: Lesson3_5_5m
+        completion_criteria:
+          measure: reward
+          behavior: Throwing
+          signal_smoothing: true
+          min_lesson_length: 100
+          threshold: 0.18
         value: 5.5
-      - name: Lesson2_Far
+      - name: Lesson4_6m
         completion_criteria:
           measure: reward
           behavior: Throwing
           signal_smoothing: true
           min_lesson_length: 100
-          threshold: 0.3
+          threshold: 0.16
+        value: 6.0
+      - name: Lesson5_7m
+        completion_criteria:
+          measure: reward
+          behavior: Throwing
+          signal_smoothing: true
+          min_lesson_length: 100
+          threshold: 0.15
         value: 7.0
-      - name: Lesson3_Final
+      - name: Lesson6_8m
         value: 8.0
   target_size:
     curriculum:
@@ -60,7 +89,7 @@ environment_parameters:
           behavior: Throwing
           signal_smoothing: true
           min_lesson_length: 100
-          threshold: 0.3
+          threshold: 0.2
         value: 1.0
       - name: Lesson1
         completion_criteria:
@@ -68,17 +97,41 @@ environment_parameters:
           behavior: Throwing
           signal_smoothing: true
           min_lesson_length: 100
-          threshold: 0.4
-        value: 0.7
+          threshold: 0.2
+        value: 0.9
       - name: Lesson2
         completion_criteria:
           measure: reward
           behavior: Throwing
           signal_smoothing: true
           min_lesson_length: 100
-          threshold: 0.3
-        value: 0.5
+          threshold: 0.2
+        value: 0.8
       - name: Lesson3
+        completion_criteria:
+          measure: reward
+          behavior: Throwing
+          signal_smoothing: true
+          min_lesson_length: 100
+          threshold: 0.18
+        value: 0.7
+      - name: Lesson4
+        completion_criteria:
+          measure: reward
+          behavior: Throwing
+          signal_smoothing: true
+          min_lesson_length: 100
+          threshold: 0.16
+        value: 0.6
+      - name: Lesson5
+        completion_criteria:
+          measure: reward
+          behavior: Throwing
+          signal_smoothing: true
+          min_lesson_length: 100
+          threshold: 0.15
+        value: 0.5
+      - name: Lesson6
         value: 0.5
   target_speed:
     curriculum:
@@ -88,7 +141,7 @@ environment_parameters:
           behavior: Throwing
           signal_smoothing: true
           min_lesson_length: 100
-          threshold: 0.4
+          threshold: 0.2
         value: 0.0
       - name: Lesson1
         completion_criteria:
@@ -96,7 +149,7 @@ environment_parameters:
           behavior: Throwing
           signal_smoothing: true
           min_lesson_length: 100
-          threshold: 0.3
+          threshold: 0.2
         value: 0.0
       - name: Lesson2
         completion_criteria:
@@ -104,9 +157,33 @@ environment_parameters:
           behavior: Throwing
           signal_smoothing: true
           min_lesson_length: 100
-          threshold: 0.3
-        value: 1.5
+          threshold: 0.2
+        value: 0.0
       - name: Lesson3
+        completion_criteria:
+          measure: reward
+          behavior: Throwing
+          signal_smoothing: true
+          min_lesson_length: 100
+          threshold: 0.18
+        value: 0.0
+      - name: Lesson4
+        completion_criteria:
+          measure: reward
+          behavior: Throwing
+          signal_smoothing: true
+          min_lesson_length: 100
+          threshold: 0.16
+        value: 1.0
+      - name: Lesson5
+        completion_criteria:
+          measure: reward
+          behavior: Throwing
+          signal_smoothing: true
+          min_lesson_length: 100
+          threshold: 0.15
+        value: 1.5
+      - name: Lesson6
         value: 2.0
   throw_noise:
     curriculum:
@@ -116,7 +193,7 @@ environment_parameters:
           behavior: Throwing
           signal_smoothing: true
           min_lesson_length: 100
-          threshold: 0.5
+          threshold: 0.2
         value: 0.0
       - name: Lesson1
         completion_criteria:
@@ -124,15 +201,39 @@ environment_parameters:
           behavior: Throwing
           signal_smoothing: true
           min_lesson_length: 100
-          threshold: 0.4
-        value: 0.03
+          threshold: 0.2
+        value: 0.0
       - name: Lesson2
         completion_criteria:
           measure: reward
           behavior: Throwing
           signal_smoothing: true
           min_lesson_length: 100
-          threshold: 0.4
-        value: 0.05
+          threshold: 0.2
+        value: 0.02
       - name: Lesson3
+        completion_criteria:
+          measure: reward
+          behavior: Throwing
+          signal_smoothing: true
+          min_lesson_length: 100
+          threshold: 0.18
+        value: 0.03
+      - name: Lesson4
+        completion_criteria:
+          measure: reward
+          behavior: Throwing
+          signal_smoothing: true
+          min_lesson_length: 100
+          threshold: 0.16
+        value: 0.04
+      - name: Lesson5
+        completion_criteria:
+          measure: reward
+          behavior: Throwing
+          signal_smoothing: true
+          min_lesson_length: 100
+          threshold: 0.15
+        value: 0.05
+      - name: Lesson6
         value: 0.05
