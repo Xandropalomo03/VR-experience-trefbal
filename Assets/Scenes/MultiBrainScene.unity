@@ -1704,7 +1704,10 @@ MonoBehaviour:
   minBallSpeed: 0.5
   minApproachSpeed: 1
   sameArenaOnly: 1
+  catchChance: 0.7
   returnToIdleDelay: 1.5
+  catchTimeout: 3
+  throwTimeout: 8
 --- !u!1 &1990000020
 GameObject:
   m_ObjectHideFlags: 0
@@ -1752,6 +1755,7 @@ MonoBehaviour:
   ballPrefab: {fileID: 5598007239552481760, guid: 0005e0ee9b4360a4796a12fbea685b20, type: 3}
   target: {fileID: 318673335}
   launchKey: 32
+  throwFromFront: 1
   spawnDistance: 8
   spawnHeight: 1
   ballSpeed: 8

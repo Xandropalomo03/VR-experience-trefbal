@@ -24,6 +24,10 @@ public class ThrowingAgent : BaseSportAgent
     [Header("Movement")]
     [SerializeField] private float maxMoveSpeed = 4f;
 
+    // Vuurt wanneer de worp-episode klaar is (raak, mis, of nooit gegooid).
+    // MatchCoordinator gebruikt dit om na de worp terug naar idle te gaan.
+    public event System.Action ThrowFinished;
+
     [Header("Throw mapping")]
     [SerializeField] private float minAngle = 20f;
     [SerializeField] private float maxAngle = 60f;
@@ -220,6 +224,7 @@ public class ThrowingAgent : BaseSportAgent
         if (StepCount >= MaxStep - 1 && !hasThrown)
         {
             AddReward(-0.1f);
+            ThrowFinished?.Invoke();
             EndEpisode();
         }
     }
@@ -273,6 +278,7 @@ public class ThrowingAgent : BaseSportAgent
 
         if (target == null)
         {
+            ThrowFinished?.Invoke();
             EndEpisode();
             return;
         }
@@ -288,6 +294,7 @@ public class ThrowingAgent : BaseSportAgent
         float proxBonus = 0.3f * (1f - Mathf.Min(distToCenter / 1f, 1f));
         AddReward(proxBonus);
 
+        ThrowFinished?.Invoke();
         EndEpisode();
     }
 
@@ -303,6 +310,7 @@ public class ThrowingAgent : BaseSportAgent
         float bonus = 0.5f * (1f - Mathf.Min(dist / 5f, 1f));
         AddReward(bonus);
 
+        ThrowFinished?.Invoke();
         EndEpisode();
     }
 

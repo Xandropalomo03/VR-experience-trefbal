@@ -8,6 +8,11 @@ public class CatchAgent : BaseSportAgent
     [Header("Catch Zone")]
     public Renderer catchZoneRenderer;
 
+    // Resultaat van een afgeronde catch-poging: true = gevangen, false =
+    // gemist / hard geraakt. MatchCoordinator luistert hierop om na een
+    // succesvolle catch naar throw te switchen. Los van de RL-reward.
+    public event System.Action<bool> CatchFinished;
+
     private bool attemptedCatch;
     private int lastRotation = -1;
 
@@ -78,11 +83,13 @@ public class CatchAgent : BaseSportAgent
         {
             AddReward(1f);
             DebugLogger.Log("CATCH", "SUCCESSFUL CATCH");
+            CatchFinished?.Invoke(true);
         }
         else
         {
             AddReward(-1f);
             DebugLogger.Log("CATCH", "MISS / NO CATCH");
+            CatchFinished?.Invoke(false);
         }
 
         Destroy(other.gameObject);
@@ -95,6 +102,7 @@ public class CatchAgent : BaseSportAgent
 
         AddReward(-1f);
         DebugLogger.Log("CATCH", "HARD HIT");
+        CatchFinished?.Invoke(false);
 
         Destroy(collision.gameObject);
         EndEpisode();

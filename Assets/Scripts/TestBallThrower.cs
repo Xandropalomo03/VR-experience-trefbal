@@ -36,6 +36,13 @@ public class TestBallThrower : MonoBehaviour
     [Header("Toets")]
     [SerializeField] private KeyCode launchKey = KeyCode.Space;
 
+    [Header("Richting")]
+    [Tooltip("TIJDELIJK: gooi recht vanaf de voorkant van de agent (+z / agent-" +
+             "forward) i.p.v. een willekeurige richting. Zo komt de bal de catch-" +
+             "zone in en lukt de catch -> throw keten betrouwbaar. Uitzetten = " +
+             "willekeurige richtingen (origineel gedrag).")]
+    [SerializeField] private bool throwFromFront = true;
+
     [Header("Worp-instellingen")]
     [Tooltip("Afstand (meter) vanwaar de bal vertrekt, rond de agent.")]
     [SerializeField] private float spawnDistance = 8f;
@@ -62,12 +69,28 @@ public class TestBallThrower : MonoBehaviour
 
         Vector3 agentPos = target.position;
 
-        // Random horizontale richting rond de agent -> vertrekpunt.
-        float angle = Random.Range(0f, 360f) * Mathf.Deg2Rad;
+        // Vertrekpunt rond de agent: vooraan of in een willekeurige richting.
+        Vector3 spawnDir;
+        if (throwFromFront)
+        {
+            // Recht voor de agent (agent-forward, ~+z). De catch-zone zit aan
+            // diezelfde voorkant, dus de bal komt netjes de zone in.
+            spawnDir = target.forward;
+            spawnDir.y = 0f;
+            if (spawnDir.sqrMagnitude < 0.0001f) spawnDir = Vector3.forward;
+            spawnDir.Normalize();
+        }
+        else
+        {
+            // Willekeurige horizontale richting rond de agent.
+            float angle = Random.Range(0f, 360f) * Mathf.Deg2Rad;
+            spawnDir = new Vector3(Mathf.Sin(angle), 0f, Mathf.Cos(angle));
+        }
+
         Vector3 spawnPos = new Vector3(
-            agentPos.x + Mathf.Sin(angle) * spawnDistance,
+            agentPos.x + spawnDir.x * spawnDistance,
             spawnHeight,
-            agentPos.z + Mathf.Cos(angle) * spawnDistance
+            agentPos.z + spawnDir.z * spawnDistance
         );
 
         GameObject ball = Instantiate(ballPrefab, spawnPos, Quaternion.identity);
