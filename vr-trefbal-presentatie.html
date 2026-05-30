@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VR Trefbal — Presentatie</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Hanken+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#0b0e13;
+    --ink-2:#11151d;
+    --line:#1f2733;
+    --paper:#eef1f4;
+    --muted:#8a94a3;
+    --kaan:#ff4324;       /* Kaan = oranje-rood */
+    --xan:#37e0b0;        /* Xanval = groen */
+    --chalk:rgba(255,255,255,.07);
+  }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    background:var(--ink);color:var(--paper);
+    font-family:'Hanken Grotesk',sans-serif;overflow:hidden;-webkit-font-smoothing:antialiased;
+  }
+  .court{position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.5}
+  .court::before{content:"";position:absolute;left:50%;top:0;bottom:0;width:2px;background:var(--chalk);transform:translateX(-50%)}
+  .court::after{content:"";position:absolute;left:50%;top:50%;width:34vmin;height:34vmin;border:2px solid var(--chalk);border-radius:50%;transform:translate(-50%,-50%)}
+  .grain{position:fixed;inset:0;z-index:1;pointer-events:none;opacity:.05;background-image:radial-gradient(var(--paper) .5px,transparent .5px);background-size:4px 4px}
+
+  .deck{position:relative;z-index:2;height:100%}
+  .slide{position:absolute;inset:0;display:none;padding:clamp(28px,6vw,96px);flex-direction:column;justify-content:center}
+  .slide.active{display:flex;animation:fade .45s ease both}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+
+  .reveal{opacity:0;transform:translateY(14px);animation:up .55s cubic-bezier(.2,.7,.2,1) forwards}
+  @keyframes up{to{opacity:1;transform:none}}
+  .reveal:nth-child(1){animation-delay:.05s}
+  .reveal:nth-child(2){animation-delay:.13s}
+  .reveal:nth-child(3){animation-delay:.21s}
+  .reveal:nth-child(4){animation-delay:.29s}
+  .reveal:nth-child(5){animation-delay:.37s}
+  .reveal:nth-child(6){animation-delay:.45s}
+
+  .kicker{font-size:clamp(11px,1.4vw,14px);letter-spacing:.28em;text-transform:uppercase;color:var(--kaan);font-weight:700;margin-bottom:1.2rem}
+  .kicker.xan{color:var(--xan)}
+  .kicker.both{color:var(--muted)}
+  h1{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:clamp(40px,9vw,128px);line-height:.92;letter-spacing:-.02em}
+  h2{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:clamp(30px,5.5vw,68px);line-height:1;letter-spacing:-.02em;max-width:18ch}
+  .lead{font-size:clamp(16px,2.1vw,24px);color:var(--muted);max-width:42ch;margin-top:1.4rem;line-height:1.5}
+
+  .grid{display:grid;gap:clamp(14px,1.6vw,22px);margin-top:clamp(22px,3vw,40px)}
+  .g2{grid-template-columns:repeat(2,1fr)}
+  .g3{grid-template-columns:repeat(3,1fr)}
+  @media(max-width:760px){.g2,.g3{grid-template-columns:1fr}}
+
+  .card{background:var(--ink-2);border:1px solid var(--line);border-radius:16px;padding:clamp(18px,2vw,28px)}
+  .card.k{border-top:3px solid var(--kaan)}
+  .card.x{border-top:3px solid var(--xan)}
+  .card h3{font-family:'Bricolage Grotesque',sans-serif;font-weight:600;font-size:clamp(18px,2.1vw,24px);margin-bottom:.5rem;letter-spacing:-.01em}
+  .card p{color:var(--muted);font-size:clamp(14px,1.5vw,17px);line-height:1.5}
+  .card .tag{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--kaan);font-weight:700;display:block;margin-bottom:.7rem}
+  .card .tag.xan{color:var(--xan)}
+
+  .stat{display:flex;align-items:baseline;gap:.5rem;margin-top:.4rem}
+  .stat b{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:clamp(34px,4.5vw,56px);color:var(--kaan);letter-spacing:-.02em;line-height:1}
+  .stat span{color:var(--muted);font-size:14px}
+
+  ul.clean{list-style:none;margin-top:clamp(20px,3vw,36px);display:grid;gap:1rem;max-width:60ch}
+  ul.clean li{position:relative;padding-left:1.8rem;font-size:clamp(15px,1.8vw,20px);line-height:1.45}
+  ul.clean li::before{content:"";position:absolute;left:0;top:.55em;width:10px;height:10px;background:var(--dot,var(--kaan));border-radius:50%}
+  ul.clean.x li::before{background:var(--xan)}
+  ul.clean li b{font-weight:700;color:var(--paper)}
+  ul.clean li span{color:var(--muted)}
+
+  .who{display:grid;gap:.7rem}
+  .who li{list-style:none;color:var(--muted);font-size:clamp(14px,1.6vw,18px);line-height:1.4}
+  .who li b{color:var(--paper);font-weight:700}
+
+  .meta{margin-top:2.2rem;color:var(--muted);font-size:clamp(13px,1.5vw,16px);letter-spacing:.04em}
+  .pill{display:inline-block;border:1px solid var(--line);border-radius:999px;padding:.45rem .9rem;font-size:13px;color:var(--paper);margin:.25rem .35rem .25rem 0}
+  .legend{margin-top:1.6rem;display:flex;gap:1.4rem;font-size:13px;color:var(--muted);letter-spacing:.04em}
+  .legend span{display:flex;align-items:center;gap:.5rem}
+  .legend i{width:11px;height:11px;border-radius:50%;display:inline-block}
+  .authors{margin-top:1.8rem;font-size:clamp(15px,1.9vw,20px);color:var(--muted)}
+  .authors b{color:var(--paper);font-weight:700}
+
+  .hud{position:fixed;z-index:5;left:0;right:0;bottom:0;display:flex;align-items:center;justify-content:space-between;padding:18px clamp(20px,4vw,40px);pointer-events:none}
+  .dots{display:flex;gap:8px;pointer-events:auto}
+  .dot{width:9px;height:9px;border-radius:50%;background:var(--line);border:none;cursor:pointer;transition:.2s}
+  .dot.on{background:var(--kaan);transform:scale(1.25)}
+  .count{font-family:'Bricolage Grotesque',sans-serif;font-weight:600;color:var(--muted);font-size:14px;letter-spacing:.05em}
+  .count b{color:var(--paper)}
+  .arrows{display:flex;gap:8px;pointer-events:auto}
+  .arrows button{background:var(--ink-2);border:1px solid var(--line);color:var(--paper);width:40px;height:40px;border-radius:10px;cursor:pointer;font-size:18px;transition:.18s}
+  .arrows button:hover{border-color:var(--kaan);color:var(--kaan)}
+  .brand{position:fixed;z-index:5;top:clamp(20px,4vw,40px);right:clamp(20px,4vw,40px);font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:14px;letter-spacing:.04em;color:var(--muted)}
+  .brand b{color:var(--kaan)}
+</style>
+</head>
+<body>
+<div class="court"></div>
+<div class="grain"></div>
+<div class="brand"><b>VR</b> TREFBAL</div>
+
+<div class="deck" id="deck">
+
+  <!-- 1 -->
+  <section class="slide active">
+    <div class="reveal kicker">AP Hogeschool · Minor Mixed Reality</div>
+    <h1 class="reveal">VR<br>Trefbal</h1>
+    <p class="reveal lead">Een 1 tegen 1 trefbalspel in VR. Jij gooit, een AI-tegenstander beweegt, vangt en gooit terug.</p>
+    <p class="reveal authors">door <b>Kaan</b> &amp; <b>Xanval</b></p>
+    <div class="reveal meta">
+      <span class="pill">Unity 6.3 LTS</span>
+      <span class="pill">ML-Agents</span>
+      <span class="pill">Meta Quest 3S</span>
+    </div>
+  </section>
+
+  <!-- 2 -->
+  <section class="slide">
+    <div class="reveal kicker both">Het idee</div>
+    <h2 class="reveal">Wat hebben we gemaakt?</h2>
+    <ul class="clean">
+      <li class="reveal"><b>De speler</b> <span>staat in VR en gooit ballen naar de overkant.</span></li>
+      <li class="reveal"><b>De AI-tegenstander</b> <span>beslist zelf wanneer hij ontwijkt, vangt of terug gooit.</span></li>
+      <li class="reveal"><b>De AI is niet gescript</b> <span>maar getraind met ML-Agents. Hij leert het gedrag zelf aan.</span></li>
+    </ul>
+  </section>
+
+  <!-- 3 — taakverdeling -->
+  <section class="slide">
+    <div class="reveal kicker both">Wie deed wat</div>
+    <h2 class="reveal">Taakverdeling</h2>
+    <div class="grid g2">
+      <div class="reveal card k">
+        <span class="tag">Kaan</span>
+        <h3>De AI-training</h3>
+        <ul class="who">
+          <li><b>Dodge-model</b> ontwijken</li>
+          <li><b>Throw-model</b> mikken en gooien</li>
+          <li><b>BrainSwitcher</b> de modellen runtime laten wisselen</li>
+        </ul>
+      </div>
+      <div class="reveal card x">
+        <span class="tag xan">Xanval</span>
+        <h3>De VR-game</h3>
+        <ul class="who">
+          <li><b>VR-omgeving</b> opzetten + gooien in VR</li>
+          <li><b>Catch-model</b> vangen</li>
+          <li><b>Scorebord</b> met collision-detectie</li>
+        </ul>
+      </div>
+    </div>
+    <div class="reveal legend">
+      <span><i style="background:var(--kaan)"></i> oranje = Kaan</span>
+      <span><i style="background:var(--xan)"></i> groen = Xanval</span>
+    </div>
+  </section>
+
+  <!-- 4 — drie brains -->
+  <section class="slide">
+    <div class="reveal kicker both">De aanpak</div>
+    <h2 class="reveal">Drie aparte brains</h2>
+    <p class="reveal lead">In plaats van één groot model trainden we drie kleine. Makkelijker te trainen en uit te leggen.</p>
+    <div class="grid g3">
+      <div class="reveal card k"><span class="tag">Dodge · Kaan</span><h3>Ontwijken</h3><p>Springt weg van de bal.</p></div>
+      <div class="reveal card x"><span class="tag xan">Catch · Xanval</span><h3>Vangen</h3><p>Grijpt de bal.</p></div>
+      <div class="reveal card k"><span class="tag">Throw · Kaan</span><h3>Gooien</h3><p>Mikt en gooit terug.</p></div>
+    </div>
+    <p class="reveal meta">De <b style="color:var(--paper)">BrainSwitcher</b> (door Kaan) wisselt tijdens het spel tussen de modellen met <b style="color:var(--paper)">SetModel()</b>.</p>
+  </section>
+
+  <!-- 5 — dodge -->
+  <section class="slide">
+    <div class="reveal kicker">Kaan · ontwijken</div>
+    <h2 class="reveal">Dodge-model</h2>
+    <div class="grid g2">
+      <div class="reveal card k">
+        <span class="tag">Doorbraak</span>
+        <h3>Raycasts in plaats van losse cijfers</h3>
+        <p>We gaven de agent eerst handgemaakte coördinaten. Pas met de RayPerceptionSensor (echte "ogen") begon hij goed te leren.</p>
+      </div>
+      <div class="reveal card k">
+        <span class="tag">Resultaat v12</span>
+        <h3>Stabiel ontwijkgedrag</h3>
+        <div class="stat"><b>+2.37</b><span>mean reward op 500k steps</span></div>
+        <p>Agent blijft op eigen helft, ballen uit drie richtingen, vier arena's tegelijk om sneller te trainen.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6 — throw -->
+  <section class="slide">
+    <div class="reveal kicker">Kaan · gooien</div>
+    <h2 class="reveal">Throw-model</h2>
+    <ul class="clean">
+      <li class="reveal"><b>Continue acties</b> <span>bewegen, mikken (hoek + richting) en kracht. Geen vaste keuzes maar vloeiend.</span></li>
+      <li class="reveal"><b>Curriculum learning</b> <span>begint dichtbij en makkelijk, doel wordt stap voor stap verder en kleiner.</span></li>
+      <li class="reveal"><b>Eerlijk over de stand</b> <span>hij mikt meestal de juiste kant op, maar raakt nog niet vaak. Hier wordt nog aan gewerkt.</span></li>
+    </ul>
+  </section>
+
+  <!-- 7 — multi-brain integratie (Kaan) -->
+  <section class="slide">
+    <div class="reveal kicker">Kaan · integratie</div>
+    <h2 class="reveal">Alles samen: de BrainSwitcher</h2>
+    <ul class="clean">
+      <li class="reveal"><b>Drie modellen op één agent</b> <span>dodge, catch en throw zitten samen in één scene.</span></li>
+      <li class="reveal"><b>Runtime wisselen</b> <span>de BrainSwitcher zet het juiste model aan afhankelijk van de situatie.</span></li>
+      <li class="reveal"><b>Los te verbeteren</b> <span>elk model kan apart beter gemaakt worden zonder de rest te breken.</span></li>
+    </ul>
+  </section>
+
+  <!-- 8 — catch (Xanval) -->
+  <section class="slide">
+    <div class="reveal kicker xan">Xanval · vangen</div>
+    <h2 class="reveal">Catch-model</h2>
+    <div class="grid g2">
+      <div class="reveal card x">
+        <span class="tag xan">Doorbraak</span>
+        <h3>Snap rotation (45°)</h3>
+        <p>Vloeiend draaien werkte niet, de agent volgde de bal niet. Drie vaste kijkhoeken (links, midden, rechts) gaven meteen veel beter gedrag.</p>
+      </div>
+      <div class="reveal card x">
+        <span class="tag xan">Grootste fix</span>
+        <h3>Catch-spam stoppen</h3>
+        <p>Zonder straf bleef de agent eindeloos vangpogingen doen. Een kleine straf van −0.02 per poging loste dit volledig op.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 9 — VR omgeving + scorebord (Xanval) -->
+  <section class="slide">
+    <div class="reveal kicker xan">Xanval · de game</div>
+    <h2 class="reveal">VR-omgeving &amp; scorebord</h2>
+    <ul class="clean x">
+      <li class="reveal"><b>Speelveld in VR</b> <span>de hele omgeving opgezet met XR Interaction Toolkit op de Quest.</span></li>
+      <li class="reveal"><b>Gooien in VR</b> <span>de speler kan zelf een stuiterende bal pakken en gooien (VRBallThrow).</span></li>
+      <li class="reveal"><b>Scorebord</b> <span>collision-detectie houdt de stand bij en toont die live op de muur.</span></li>
+    </ul>
+  </section>
+
+  <!-- 10 — lessen -->
+  <section class="slide">
+    <div class="reveal kicker both">Wat we geleerd hebben</div>
+    <h2 class="reveal">Belangrijkste lessen</h2>
+    <div class="grid g2">
+      <div class="reveal card"><h3>Raycasts &gt; losse cijfers</h3><p>De agent leert sneller als hij de wereld "ziet" via rays.</p></div>
+      <div class="reveal card"><h3>Simpel &gt; complex</h3><p>Drie vaste kijkhoeken werkten beter dan vrij draaien.</p></div>
+      <div class="reveal card"><h3>Kleine straffen tellen</h3><p>Een straf van −0.02 had meer impact dan grote architectuurkeuzes.</p></div>
+      <div class="reveal card"><h3>Cijfers ≠ goed gedrag</h3><p>Een hoge reward kan nog steeds raar gedrag verbergen. Altijd zelf kijken.</p></div>
+    </div>
+  </section>
+
+  <!-- 11 — conclusie -->
+  <section class="slide">
+    <div class="reveal kicker both">Conclusie</div>
+    <h2 class="reveal">Een AI die zelf trefbal speelt</h2>
+    <p class="reveal lead">Geen gescripte tegenstander, maar drie getrainde modellen die tijdens het spel wisselen, in een speelbare VR-omgeving. Het werkt end-to-end, ook al is niet elk model perfect.</p>
+    <div class="reveal meta" style="margin-top:1.6rem">
+      <b style="color:var(--paper);font-family:'Bricolage Grotesque';font-size:15px;letter-spacing:.05em">VOLGENDE STAPPEN</b>
+      <div style="margin-top:.8rem">
+        <span class="pill">Throw beter trainen</span>
+        <span class="pill">Meer kijkrichtingen voor catch</span>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<div class="hud">
+  <div class="count"><b id="cur">1</b> / <span id="tot">11</span></div>
+  <div class="dots" id="dots"></div>
+  <div class="arrows">
+    <button id="prev" aria-label="Vorige">&#8249;</button>
+    <button id="next" aria-label="Volgende">&#8250;</button>
+  </div>
+</div>
+
+<script>
+  const slides=[...document.querySelectorAll('.slide')];
+  const dotsWrap=document.getElementById('dots');
+  const cur=document.getElementById('cur');
+  document.getElementById('tot').textContent=slides.length;
+  let i=0;
+  slides.forEach((_,n)=>{const d=document.createElement('button');d.className='dot'+(n===0?' on':'');d.onclick=()=>go(n);dotsWrap.appendChild(d);});
+  const dots=[...dotsWrap.children];
+  function go(n){i=Math.max(0,Math.min(slides.length-1,n));slides.forEach((s,k)=>s.classList.toggle('active',k===i));dots.forEach((d,k)=>d.classList.toggle('on',k===i));cur.textContent=i+1;}
+  document.getElementById('next').onclick=()=>go(i+1);
+  document.getElementById('prev').onclick=()=>go(i-1);
+  document.addEventListener('keydown',e=>{
+    if(e.key==='ArrowRight'||e.key===' '||e.key==='PageDown'){e.preventDefault();go(i+1)}
+    if(e.key==='ArrowLeft'||e.key==='PageUp'){e.preventDefault();go(i-1)}
+    if(e.key==='Home')go(0); if(e.key==='End')go(slides.length-1);
+  });
+  let x0=null;
+  addEventListener('touchstart',e=>x0=e.touches[0].clientX,{passive:true});
+  addEventListener('touchend',e=>{if(x0===null)return;const dx=e.changedTouches[0].clientX-x0;if(Math.abs(dx)>50)go(i+(dx<0?1:-1));x0=null;},{passive:true});
+</script>
+</body>
+</html>
