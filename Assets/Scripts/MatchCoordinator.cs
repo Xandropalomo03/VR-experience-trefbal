@@ -78,6 +78,13 @@ public class MatchCoordinator : MonoBehaviour
              "scene-start opgezocht. Niet gevonden -> val terug op de plek waar de " +
              "bal vandaan kwam (oude trainings-gedrag).")]
     [SerializeField] private string playerTag = "Player";
+    [Tooltip("Het throw-model is op ~4-8m doelen getraind. De echte speler staat " +
+             "verder (~12m), wat out-of-distribution is -> de agent triggert de " +
+             "worp dan niet. We klemmen het mikpunt tot deze afstand (m) richting " +
+             "de speler zodat de observaties in het getrainde bereik blijven en de " +
+             "agent daadwerkelijk gooit. De bal gaat dan richting de speler maar kan " +
+             "te kort komen (worp-afstand is aparte tuning). 0 = niet klemmen.")]
+    [SerializeField] private float maxThrowTargetDistance = 7f;
 
     [Header("Bal-detectie")]
     [Tooltip("Tag van de ballen waarop gereageerd wordt.")]
@@ -320,9 +327,23 @@ public class MatchCoordinator : MonoBehaviour
         if (brainSwitcher.throwSupport != null)
         {
             Vector3 aim = playerTransform != null ? playerTransform.position : lastBallOrigin;
+
+            // Klem het mikpunt binnen het getrainde bereik van het throw-model.
+            // Een doel op ~12m is out-of-distribution en dan triggert de agent de
+            // worp niet (throw timeout). Door tot maxThrowTargetDistance te klemmen
+            // (richting de speler) blijven de obs in-distribution -> de agent gooit
+            // wel, in de richting van de speler.
+            if (maxThrowTargetDistance > 0f && agentTransform != null)
+            {
+                Vector3 toAim = aim - agentTransform.position;
+                float dist = toAim.magnitude;
+                if (dist > maxThrowTargetDistance)
+                    aim = agentTransform.position + toAim * (maxThrowTargetDistance / dist);
+            }
+
             brainSwitcher.throwSupport.transform.position = aim;
             DebugLogger.Log("MATCH", $"throw-target gezet op {aim} " +
-                (playerTransform != null ? "(speler)" : "(oorsprong bal)"));
+                (playerTransform != null ? "(richting speler, geklemd)" : "(oorsprong bal)"));
         }
     }
 
