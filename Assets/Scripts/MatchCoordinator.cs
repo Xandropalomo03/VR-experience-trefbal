@@ -128,6 +128,7 @@ public class MatchCoordinator : MonoBehaviour
 
     private CatchAgent catchAgent;
     private ThrowingAgent throwAgent;
+    private DecisionRequester throwDecisionRequester; // gate: throw mag alleen beslissen in Throw-state
     private Transform playerTransform;
 
     private void Awake()
@@ -161,7 +162,15 @@ public class MatchCoordinator : MonoBehaviour
             if (brainSwitcher.catchAgent != null)
                 brainSwitcher.catchAgent.TryGetComponent(out catchAgent);
             if (brainSwitcher.throwAgent != null)
+            {
                 brainSwitcher.throwAgent.TryGetComponent(out throwAgent);
+                brainSwitcher.throwAgent.TryGetComponent(out throwDecisionRequester);
+            }
+
+            // Throw-brain mag NIET beslissen tot we echt in de Throw-state gaan.
+            // Anders gooit hij al tijdens de BrainSwitcher warm-up bij scene-start.
+            // (Zelfde DecisionRequester-toggle als bij de dodge-brain.)
+            if (throwDecisionRequester != null) throwDecisionRequester.enabled = false;
 
             if (catchAgent != null) catchAgent.CatchFinished += OnCatchFinished;
             if (throwAgent != null) throwAgent.ThrowFinished += OnThrowFinished;
@@ -274,6 +283,10 @@ public class MatchCoordinator : MonoBehaviour
         pendingThrowDone = false;
         DebugLogger.Log("MATCH", "-> IDLE");
 
+        // Worp weer "ontscherpen": throw-brain mag buiten de Throw-state niet
+        // beslissen/gooien (o.a. tijdens de warm-up bij scene-start).
+        if (throwDecisionRequester != null) throwDecisionRequester.enabled = false;
+
         // Zorg dat de dodge-body weer de actieve body is (na catch/throw).
         if (switchBrain && brainSwitcher != null) brainSwitcher.SwitchToBrain("dodge");
 
@@ -316,6 +329,10 @@ public class MatchCoordinator : MonoBehaviour
         DebugLogger.Log("MATCH", "catch gelukt -> THROW");
 
         idleMovement.enabled = false;
+
+        // Worp "scherp zetten": throw-brain mag nu beslissen/gooien. Buiten de
+        // Throw-state staat z'n DecisionRequester uit (zodat de warm-up niet gooit).
+        if (throwDecisionRequester != null) throwDecisionRequester.enabled = true;
 
         // Switch naar de throw-body. Diens OnEpisodeBegin spawnt zelf een verse
         // bal in de holder (de bal-handoff) en reset het target.

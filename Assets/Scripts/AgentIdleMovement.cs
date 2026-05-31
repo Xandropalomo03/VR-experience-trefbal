@@ -72,6 +72,12 @@ public class AgentIdleMovement : MonoBehaviour
     {
         if (rb == null) return;
 
+        // Houd de idle/"thuis"-body in z'n eigen helft (lokaal, parent-relatief).
+        // De catch- en throw-body nemen deze positie over via de BrainSwitcher;
+        // door 'm hier te begrenzen blijft de hele agent in z'n eigen helft, ook
+        // als een worp-overdracht 'm net over de middenlijn had gezet.
+        ClampToOwnHalf();
+
         // Even pauzeren bij een bereikt punt.
         if (pauseTimer > 0f)
         {
@@ -98,6 +104,22 @@ public class AgentIdleMovement : MonoBehaviour
         Vector3 dir = toTarget.normalized;
         Vector3 vel = dir * moveSpeed;
         rb.linearVelocity = new Vector3(vel.x, rb.linearVelocity.y, vel.z);
+    }
+
+    // Klem de lokale positie tot de eigen helft: x binnen de idle-zone, z tot aan
+    // de middenlijn (z = 0), niet erover. Normaal een no-op (idle blijft in z<0);
+    // grijpt alleen in als de body net over de lijn is gezet (bv. na een worp).
+    private void ClampToOwnHalf()
+    {
+        Vector3 lp = transform.localPosition;
+        float cx = Mathf.Clamp(lp.x, areaMin.x, areaMax.x);
+        float cz = Mathf.Clamp(lp.z, areaMin.y, 0f);
+        if (cx != lp.x || cz != lp.z)
+        {
+            lp.x = cx;
+            lp.z = cz;
+            transform.localPosition = lp;
+        }
     }
 
     private void ChooseNewTarget()

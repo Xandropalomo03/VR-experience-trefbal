@@ -185,13 +185,57 @@ public class BrainSwitcher : MonoBehaviour
     private void SetAgentEnabled(GameObject go, bool on)
     {
         if (go == null) return;
+
+        go.TryGetComponent(out Rigidbody rb);
+
+        // Bij ACTIVEREN: non-kinematic (fysiek aangedreven) zodat de agent z'n
+        // velocity-beweging/worp kan doen. Vóór het enablen, zodat OnEpisodeBegin
+        // (die de velocity nult) op een non-kinematic body draait. Alleen togglen
+        // als 'ie nog kinematic is (anders onnodig).
+        if (on && rb != null && rb.isKinematic) rb.isKinematic = false;
+
         if (go.TryGetComponent(out Agent agent))
         {
             if (agent.enabled != on)
                 DebugLogger.Log("AGENT", $"{go.name}.Agent.enabled {agent.enabled}->{on}");
             agent.enabled = on;
         }
+
+        // Bij PARKEREN: stilzetten + kinematic. Voorkomt door-glijden op momentum
+        // (de "wegdwalende" throw-body na de worp) en vallen. De geparkeerde body
+        // volgt daarna de actieve body via LateUpdate (zie SyncInactiveBody).
+        // ALLEEN als 'ie nu nog non-kinematic is: ApplyActive roept dit elke switch
+        // aan voor de al-geparkeerde bodies, en velocity zetten op een al-kinematic
+        // body geeft de "Setting linear velocity of a kinematic body"-warning.
+        if (!on && rb != null && !rb.isKinematic)
+        {
+            rb.linearVelocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+            rb.isKinematic = true;
+        }
+
         SetAgentVisible(go, on);
+    }
+
+    // Houd de geparkeerde (inactieve) bodies CONTINU op de actieve body, zodat de
+    // drie altijd samenvallen — ongeacht welke actief is. Zo "dwaalt" er nooit een
+    // body uit het zichtbare lichaam. De inactieve bodies zijn kinematic (zie
+    // SetAgentEnabled) en onzichtbaar/zonder collider, dus dit is puur transform-
+    // volgen zonder physics-conflict.
+    private void LateUpdate()
+    {
+        if (currentActive == null) return;
+        Vector3 pos = currentActive.transform.position;
+        Quaternion rot = currentActive.transform.rotation;
+        SyncInactiveBody(dodgeAgent, pos, rot);
+        SyncInactiveBody(catchAgent, pos, rot);
+        SyncInactiveBody(throwAgent, pos, rot);
+    }
+
+    private void SyncInactiveBody(GameObject go, Vector3 pos, Quaternion rot)
+    {
+        if (go == null || go == currentActive) return;
+        go.transform.SetPositionAndRotation(pos, rot);
     }
 
     // Zet alle renderers + colliders onder de agent op enabled = visible.

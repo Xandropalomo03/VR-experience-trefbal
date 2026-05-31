@@ -30,6 +30,24 @@ public class ThrowingAgent : BaseSportAgent
              "in de game-scene.")]
     [SerializeField] private bool gameMode = false;
 
+    [Tooltip("Alleen in gameMode: hoe ver (m) de throw-agent maximaal van z'n " +
+             "START-positie mag bewegen tijdens het positioneren. De start = waar " +
+             "de catch 'm achterlaat (vastgelegd bij de 1e actie, NA de BrainSwitcher-" +
+             "overdracht). RELATIEF, dus GEEN grote terugsnap meer -> de worp triggert " +
+             "vanaf de catch-eindpositie, maar hij drift niet van het veld. Parent-" +
+             "relatief (lokale x,z), werkt ook in de gedraaide/verschoven arena.")]
+    [SerializeField] private float maxDriftFromStart = 1.5f;
+
+    [Tooltip("Alleen in gameMode: harde vangnet-grens (LOKALE |x| en |z|) zodat de " +
+             "throw-body sowieso nooit buiten het veld komt, ook als er nog drift " +
+             "zit. Net binnen de arena-muren (die staan op ±5).")]
+    [SerializeField] private float arenaHalfExtent = 4.5f;
+
+    // Worp-startpositie (lokaal), vastgelegd bij de eerste actie van de episode
+    // (na de overdracht door de BrainSwitcher). De drift-clamp werkt hieromheen.
+    private Vector3 throwStartLocal;
+    private bool throwStartCaptured;
+
     // Vuurt wanneer de worp-episode klaar is (raak, mis, of nooit gegooid).
     // MatchCoordinator gebruikt dit om na de worp terug naar idle te gaan.
     public event System.Action ThrowFinished;
@@ -112,6 +130,9 @@ public class ThrowingAgent : BaseSportAgent
         // Reset state
         hasThrown = false;
         closestApproach = float.MaxValue;
+        // Startpositie opnieuw vastleggen bij de eerstvolgende actie (dan is de
+        // BrainSwitcher-overdracht al gebeurd en staat de body waar de catch eindigde).
+        throwStartCaptured = false;
 
         // Geef agent een bal
         SpawnBall();
@@ -223,9 +244,31 @@ public class ThrowingAgent : BaseSportAgent
         Vector3 vel = transform.parent != null ? transform.parent.TransformDirection(moveLocal) : moveLocal;
         rb.linearVelocity = new Vector3(vel.x, rb.linearVelocity.y, vel.z);
 
-        // Houd agent op eigen helft (z < 0)
-        if (transform.localPosition.z > 0f)
+        // Houd agent in de buurt van z'n startpositie. Parent-relatief
+        // (localPosition), dus dit werkt ook in de gedraaide/verschoven VR-arena.
+        if (gameMode)
         {
+            // Leg de start vast op de EERSTE actie na de episode-start (dan staat
+            // de body waar de catch 'm achterliet, na de BrainSwitcher-overdracht).
+            // Daarna alleen de DRIFT relatief begrenzen: geen grote terugsnap, dus
+            // de worp triggert vanaf die plek, maar hij loopt niet van het veld af.
+            if (!throwStartCaptured)
+            {
+                throwStartLocal = transform.localPosition;
+                throwStartCaptured = true;
+            }
+            Vector3 lp = transform.localPosition;
+            lp.x = Mathf.Clamp(lp.x, throwStartLocal.x - maxDriftFromStart, throwStartLocal.x + maxDriftFromStart);
+            lp.z = Mathf.Clamp(lp.z, throwStartLocal.z - maxDriftFromStart, throwStartLocal.z + maxDriftFromStart);
+            // Vangnet: sowieso binnen de arena (lokaal ±arenaHalfExtent), ook als
+            // de relatieve clamp ergens om een gedrifte start heen zou werken.
+            lp.x = Mathf.Clamp(lp.x, -arenaHalfExtent, arenaHalfExtent);
+            lp.z = Mathf.Clamp(lp.z, -arenaHalfExtent, arenaHalfExtent);
+            transform.localPosition = lp;
+        }
+        else if (transform.localPosition.z > 0f)
+        {
+            // Training: ongewijzigd — alleen de eigen helft (z <= 0) afdwingen.
             Vector3 lp = transform.localPosition;
             lp.z = 0f;
             transform.localPosition = lp;
@@ -255,19 +298,36 @@ public class ThrowingAgent : BaseSportAgent
                 AddReward(0.002f * (1f - absAngle / 30f));
         }
 
-        // Trigger gooi
+        // Trigger gooi. (De warm-up-worp wordt buiten dit script voorkomen door
+        // de DecisionRequester van de throw-body uit te zetten zolang het geen
+        // echte Throw-state is; zie MatchCoordinator.)
         if (trigger == 1 && hasBall && !hasThrown)
         {
             ThrowBall(aimYaw, throwAngle, throwPower);
         }
 
-        // Max steps zonder ooit te gooien
-        if (StepCount >= MaxStep - 1 && !hasThrown)
+        // Max steps zonder ooit te gooien. Alleen training: in de game regelt
+        // MatchCoordinator dit via throwTimeout en is EndEpisode/respawn uit
+        // (anders zou een almaar groeiende StepCount dit vroegtijdig triggeren).
+        if (!gameMode && StepCount >= MaxStep - 1 && !hasThrown)
         {
             AddReward(-0.1f);
             ThrowFinished?.Invoke();
             EndEpisode();
         }
+    }
+
+    // Rondt een worp-poging af. ALTIJD ThrowFinished vuren (MatchCoordinator gaat
+    // dan naar idle). In TRAINING ook EndEpisode (reset + nieuwe bal, leer verder).
+    // In de GAME (gameMode) GEEN EndEpisode -> geen respawn, geen hergooi-lus: de
+    // throw gooit één keer en stopt; de gegooide bal vliegt door (scoort via
+    // BallScore). De volgende worp-bal komt vanzelf bij de volgende Throw-state
+    // (BrainSwitcher re-enable -> OnEpisodeBegin -> SpawnBall).
+    private void FinishThrow()
+    {
+        ThrowFinished?.Invoke();
+        if (!gameMode)
+            EndEpisode();
     }
 
     private void ThrowBall(float yawNorm, float angleNorm, float powerNorm)
@@ -319,8 +379,7 @@ public class ThrowingAgent : BaseSportAgent
 
         if (target == null)
         {
-            ThrowFinished?.Invoke();
-            EndEpisode();
+            FinishThrow();
             return;
         }
 
@@ -335,8 +394,7 @@ public class ThrowingAgent : BaseSportAgent
         float proxBonus = 0.3f * (1f - Mathf.Min(distToCenter / 1f, 1f));
         AddReward(proxBonus);
 
-        ThrowFinished?.Invoke();
-        EndEpisode();
+        FinishThrow();
     }
 
     // Aangeroepen door ThrowableBall bij missen (grond/muur)
@@ -351,8 +409,7 @@ public class ThrowingAgent : BaseSportAgent
         float bonus = 0.5f * (1f - Mathf.Min(dist / 5f, 1f));
         AddReward(bonus);
 
-        ThrowFinished?.Invoke();
-        EndEpisode();
+        FinishThrow();
     }
 
     public override void Heuristic(in ActionBuffers actionsOut)
