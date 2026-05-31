@@ -186,14 +186,6 @@ public class BrainSwitcher : MonoBehaviour
     {
         if (go == null) return;
 
-        go.TryGetComponent(out Rigidbody rb);
-
-        // Bij ACTIVEREN: non-kinematic (fysiek aangedreven) zodat de agent z'n
-        // velocity-beweging/worp kan doen. Vóór het enablen, zodat OnEpisodeBegin
-        // (die de velocity nult) op een non-kinematic body draait. Alleen togglen
-        // als 'ie nog kinematic is (anders onnodig).
-        if (on && rb != null && rb.isKinematic) rb.isKinematic = false;
-
         if (go.TryGetComponent(out Agent agent))
         {
             if (agent.enabled != on)
@@ -201,17 +193,17 @@ public class BrainSwitcher : MonoBehaviour
             agent.enabled = on;
         }
 
-        // Bij PARKEREN: stilzetten + kinematic. Voorkomt door-glijden op momentum
-        // (de "wegdwalende" throw-body na de worp) en vallen. De geparkeerde body
-        // volgt daarna de actieve body via LateUpdate (zie SyncInactiveBody).
-        // ALLEEN als 'ie nu nog non-kinematic is: ApplyActive roept dit elke switch
-        // aan voor de al-geparkeerde bodies, en velocity zetten op een al-kinematic
-        // body geeft de "Setting linear velocity of a kinematic body"-warning.
-        if (!on && rb != null && !rb.isKinematic)
+        // Bij PARKEREN: alleen de velocity nullen zodat de body niet doorglijdt op
+        // momentum. We laten de body BEWUST non-kinematic: niet-vallen is al geborgd
+        // door de Rigidbody-constraints (Y bevroren) en op de actieve body blijven
+        // door de positie-sync in LateUpdate. Geen kinematic-toggle = geen "Setting
+        // linear velocity of a kinematic body"-warnings meer (geen enkele agent-body
+        // is ooit kinematic, dus geen enkele velocity-setter — ook deferred
+        // OnEpisodeBegin — kan op een kinematic body landen).
+        if (!on && go.TryGetComponent(out Rigidbody rb))
         {
             rb.linearVelocity = Vector3.zero;
             rb.angularVelocity = Vector3.zero;
-            rb.isKinematic = true;
         }
 
         SetAgentVisible(go, on);
