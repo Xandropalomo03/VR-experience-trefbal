@@ -24,6 +24,12 @@ public class ThrowingAgent : BaseSportAgent
     [Header("Movement")]
     [SerializeField] private float maxMoveSpeed = 4f;
 
+    [Tooltip("UIT = training (agent spawnt elke episode op een random plek in z'n " +
+             "helft). AAN = game (vr-omgeving): de agent behoudt z'n huidige " +
+             "positie bij een nieuwe worp-episode i.p.v. te teleporteren. Zet AAN " +
+             "in de game-scene.")]
+    [SerializeField] private bool gameMode = false;
+
     // Vuurt wanneer de worp-episode klaar is (raak, mis, of nooit gegooid).
     // MatchCoordinator gebruikt dit om na de worp terug naar idle te gaan.
     public event System.Action ThrowFinished;
@@ -58,6 +64,21 @@ public class ThrowingAgent : BaseSportAgent
             rb.isKinematic = false;
     }
 
+    // Wanneer de BrainSwitcher deze agent uitschakelt (na de warm-up of na een
+    // worp), een nog VASTGEHOUDEN bal opruimen. Zo blijft er geen "spook"-bal
+    // in de hand hangen wanneer throw niet de actieve brain is (de warm-up bij
+    // scene-start spawnt er anders eentje die blijft zweven). Een al GEGOOIDE
+    // bal (hasBall == false) laten we met rust zodat die de speler kan bereiken.
+    private void OnDisable()
+    {
+        if (hasBall && currentBall != null)
+        {
+            Destroy(currentBall.gameObject);
+            currentBall = null;
+            hasBall = false;
+        }
+    }
+
     public override void OnEpisodeBegin()
     {
         // Lees curriculum env params
@@ -67,12 +88,18 @@ public class ThrowingAgent : BaseSportAgent
         curTargetSpeed = envParams.GetWithDefault("target_speed", 0f);
         curThrowNoise = envParams.GetWithDefault("throw_noise", 0f);
 
-        // Spawn agent op eigen helft
-        transform.localPosition = new Vector3(
-            Random.Range(-3f, 3f),
-            1f,
-            Random.Range(-4f, -1f)
-        );
+        // Spawn agent op eigen helft. In de game NIET teleporteren: de
+        // BrainSwitcher zet de throw-body bij elke worp op de plek van de agent;
+        // herpositioneren zou 'm laten verspringen. We behouden de positie en
+        // zetten alleen de oriëntatie speler-gericht (lokaal, kleine variatie).
+        if (!gameMode)
+        {
+            transform.localPosition = new Vector3(
+                Random.Range(-3f, 3f),
+                1f,
+                Random.Range(-4f, -1f)
+            );
+        }
         transform.localRotation = Quaternion.Euler(0f, Random.Range(-30f, 30f), 0f);
 
         rb.linearVelocity = Vector3.zero;
@@ -123,16 +150,28 @@ public class ThrowingAgent : BaseSportAgent
         Vector3 targetVel = target != null ? target.CurrentVelocity : Vector3.zero;
         Vector3 toTarget = targetPos - transform.position;
 
+        // Observaties uitdrukken in het ARENA-frame (parent) i.p.v. wereld.
+        // In de trainings-scene staat de arena op identity, dus dit is exact
+        // gelijk aan de oude wereld-obs (zelfde getallen) -> het v3-model blijft
+        // werken. In de VR-scene is de arena -90° gedraaid; door parent-relatief
+        // te observeren ziet het model dezelfde verdeling als tijdens training
+        // (doel "voor zich", lokale yaw ~0) i.p.v. out-of-distribution
+        // wereld-coördinaten. De observatie-VOLGORDE en -grootte (12) blijven
+        // ongewijzigd.
+        Transform frame = transform.parent;
+        Vector3 toTargetF = frame != null ? frame.InverseTransformDirection(toTarget) : toTarget;
+        Vector3 targetVelF = frame != null ? frame.InverseTransformDirection(targetVel) : targetVel;
+
         // [0..1] Relatieve positie target (genormaliseerd)
-        sensor.AddObservation(toTarget.x / 10f);
-        sensor.AddObservation(toTarget.z / 10f);
+        sensor.AddObservation(toTargetF.x / 10f);
+        sensor.AddObservation(toTargetF.z / 10f);
 
         // [2..3] Target snelheid
-        sensor.AddObservation(targetVel.x / 5f);
-        sensor.AddObservation(targetVel.z / 5f);
+        sensor.AddObservation(targetVelF.x / 5f);
+        sensor.AddObservation(targetVelF.z / 5f);
 
-        // [4..5] Agent rotation als sin/cos
-        float yawRad = transform.eulerAngles.y * Mathf.Deg2Rad;
+        // [4..5] Agent rotation als sin/cos (LOKAAL t.o.v. arena, zie boven)
+        float yawRad = transform.localEulerAngles.y * Mathf.Deg2Rad;
         sensor.AddObservation(Mathf.Sin(yawRad));
         sensor.AddObservation(Mathf.Cos(yawRad));
 
@@ -178,8 +217,10 @@ public class ThrowingAgent : BaseSportAgent
 
         int trigger = actions.DiscreteActions[0];
 
-        // Movement
-        Vector3 vel = new Vector3(moveX, 0f, moveZ) * maxMoveSpeed;
+        // Movement in arena-frame (consistent met de parent-relatieve obs).
+        // Identity-arena in training -> identiek aan het oude wereld-gedrag.
+        Vector3 moveLocal = new Vector3(moveX, 0f, moveZ) * maxMoveSpeed;
+        Vector3 vel = transform.parent != null ? transform.parent.TransformDirection(moveLocal) : moveLocal;
         rb.linearVelocity = new Vector3(vel.x, rb.linearVelocity.y, vel.z);
 
         // Houd agent op eigen helft (z < 0)

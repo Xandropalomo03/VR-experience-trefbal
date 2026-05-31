@@ -73,6 +73,12 @@ public class MatchCoordinator : MonoBehaviour
     [Tooltip("Verplicht voor catch + throw. Leeg = alleen idle/dodge.")]
     [SerializeField] private BrainSwitcher brainSwitcher;
 
+    [Header("Throw-doel")]
+    [Tooltip("Tag van de speler-hitbox waar de throw-agent op terugmikt. Wordt bij " +
+             "scene-start opgezocht. Niet gevonden -> val terug op de plek waar de " +
+             "bal vandaan kwam (oude trainings-gedrag).")]
+    [SerializeField] private string playerTag = "Player";
+
     [Header("Bal-detectie")]
     [Tooltip("Tag van de ballen waarop gereageerd wordt.")]
     [SerializeField] private string ballTag = "Ball";
@@ -115,6 +121,7 @@ public class MatchCoordinator : MonoBehaviour
 
     private CatchAgent catchAgent;
     private ThrowingAgent throwAgent;
+    private Transform playerTransform;
 
     private void Awake()
     {
@@ -123,6 +130,14 @@ public class MatchCoordinator : MonoBehaviour
             agentTransform.TryGetComponent(out decisionRequester);
             agentTransform.TryGetComponent(out dodgeAgentComponent);
             arena = agentTransform.parent;
+        }
+
+        // Speler-hitbox opzoeken voor het terugmikken (VR-scene). Mag ontbreken
+        // (trainings-scenes): dan valt EnterThrow terug op de bal-oorsprong.
+        if (!string.IsNullOrEmpty(playerTag))
+        {
+            GameObject playerObj = GameObject.FindGameObjectWithTag(playerTag);
+            if (playerObj != null) playerTransform = playerObj.transform;
         }
 
         if (decisionRequester == null)
@@ -299,13 +314,15 @@ public class MatchCoordinator : MonoBehaviour
         // bal in de holder (de bal-handoff) en reset het target.
         brainSwitcher.SwitchToBrain("throw");
 
-        // Mik terug naar waar de bal vandaan kwam. NA de switch, want de
+        // Mik terug richting de SPELER (VR). NA de switch, want de
         // throw-OnEpisodeBegin heeft het target net naar een random plek gezet.
+        // Geen speler gevonden -> val terug op de plek waar de bal vandaan kwam.
         if (brainSwitcher.throwSupport != null)
         {
-            Vector3 aim = lastBallOrigin;
+            Vector3 aim = playerTransform != null ? playerTransform.position : lastBallOrigin;
             brainSwitcher.throwSupport.transform.position = aim;
-            DebugLogger.Log("MATCH", $"throw-target gezet op {aim} (oorsprong bal)");
+            DebugLogger.Log("MATCH", $"throw-target gezet op {aim} " +
+                (playerTransform != null ? "(speler)" : "(oorsprong bal)"));
         }
     }
 

@@ -14,6 +14,7 @@ GameObject:
   - component: {fileID: 7735816834887719464}
   - component: {fileID: 5099813756029295098}
   - component: {fileID: 5153865880314021685}
+  - component: {fileID: 1990000100}
   m_Layer: 0
   m_Name: Ball
   m_TagString: Ball
@@ -154,3 +155,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Ball
   lifetime: 4
+--- !u!114 &1990000100
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5598007239552481760}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6d85c378c5c7f194cb852a3a295ff1aa, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::BallScore
